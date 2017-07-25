@@ -12,6 +12,7 @@ CXX         ?= g++
 CXXFLAGS    ?= -Wall -Wextra -pedantic -mtune=native
 
 # These flags are required for the build to work.
+LIB          = -lz
 FLAGS        = -std=c++11
 
 # Different debug/optimisation levels for debug/release builds.
@@ -36,7 +37,7 @@ dir_guard=@mkdir -p $(@D)
 
 $(TARGET): $(OBJECTS)
 	$(dir_guard)
-	$(CXX) $(FLAGS) $(CXXFLAGS) -o $(TARGET) $(OBJECTS)
+	$(CXX) $(FLAGS) $(CXXFLAGS) $(LIB) -o $(TARGET) $(OBJECTS)
 
 clean:
 	$(RM) $(OBJECTS)

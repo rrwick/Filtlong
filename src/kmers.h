@@ -15,31 +15,26 @@
 //You should have received a copy of the GNU General Public License
 //along with LongQC.  If not, see <http://www.gnu.org/licenses/>.
 
-
-#include "read.h"
-
-Read::Read(std::string name, std::string seq, std::string quals, Kmers * kmers, int window_size) {
-    m_name = name;
-    m_length = seq.length();
-
-    // If reference k-mers aren't available, use the read quality scores.
-    if (kmers) {
-        m_mean_quality = get_mean_quality(&quals);
-        m_window_quality = get_window_quality(&quals, window_size);
-    }
-
-    // If there are reference k-mers, use them instead of read quality scores.
-    else {
-
-    }
-}
+#ifndef KMERS_H
+#define KMERS_H
 
 
-double Read::get_mean_quality(std::string * quals) {
-    return 0.0; // TEMP
-}
+#include <string>
+#include <unordered_set>
 
 
-double Read::get_window_quality(std::string * quals, int window_size) {
-    return 0.0; // TEMP
-}
+class Kmers
+{
+public:
+    Kmers();
+
+    void add_read_fastq(std::string filename);
+    void add_assembly_fasta(std::string filename);
+    bool is_kmer_present(uint32_t kmer);
+
+private:
+    std::unordered_set<uint32_t> m_kmers;
+    void add_reference(std::string filename, bool require_two_kmer_copies);
+};
+
+#endif // KMERS_H

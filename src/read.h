@@ -20,17 +20,24 @@
 
 
 #include <string>
+#include <unordered_set>
+
+#include "kmers.h"
 
 
 class Read
 {
 public:
-    Read();
+    Read(std::string name, std::string seq, std::string quals, Kmers * kmers, int window_size);
 
-    std::string read_name;
-    int length;
-    double mean_quality;
-    double window_quality;
+    std::string m_name;
+    int m_length;
+    double m_mean_quality;
+    double m_window_quality;
+
+private:
+    double get_mean_quality(std::string * quals);
+    double get_window_quality(std::string * quals, int window_size);
 };
 
 #endif // READ_H

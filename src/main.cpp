@@ -67,9 +67,18 @@ int main(int argc, char **argv)
 
     // Read through references and save 16-mers.
 
-    // Read through input reads once, storing them as Read objects.
+    // Read through input reads once, storing them as Read objects and calculating their scores.
 
-    // Decide which reads will be outputted (may involve sorting and stuff).
+    // Decide which reads will be outputted:
+    //  * total up the bases in the input reads
+    //  * cull any reads wil fail to meet a threshold
+    //  * sort reads from best to worst
+    //  * if the user used --keep_percent:
+    //     * loop through reads from best to worst
+    //     * when we've exceeded the keep percent, all remaining reads are culled
+    //  * if the user used --target_bases:
+    //     * loop through reads from best to worst
+    //     * when we've exceeded the target bases, all remaining reads are culled
 
     // Read through input reads again, this time outputting the keepers to stdout and ignoring the failures.
     // If in verbose mode, display a table as we go.
