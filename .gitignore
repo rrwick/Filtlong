@@ -1,0 +1,15 @@
+# Mac stuff
+.DS_Store
+._.DS_Store
+
+# Built files
+src/*.o
+bin
+
+# CLion
+.idea/
+cmake-build-debug
+
+notes
+
+gh-md-toc
