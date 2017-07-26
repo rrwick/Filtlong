@@ -31,17 +31,22 @@ Kmers::Kmers() {
 }
 
 
-void Kmers::add_read_fastq(std::string filename) {
+void Kmers::add_read_fastqs(std::vector<std::string> filenames) {
     std::cerr << "Hashing k-mers from Illumina reads\n";
-    int sequence_count = add_reference(filename, true);
-    std::cout << "  " << sequence_count << " reads, ";
-    std::cout << m_first_time_kmers.size() << " total k-mers, ";
+
+    int sequence_count = 0;
+    for (auto & filename : filenames) {
+        std::cout << "  " << filename << "\n";
+        sequence_count += add_reference(filename, true);
+    }
+    std::cout << "  " << m_first_time_kmers.size() << " total k-mers, ";
     std::cout << m_kmers.size() << " final k-mers\n";
 }
 
 
 void Kmers::add_assembly_fasta(std::string filename) {
     std::cerr << "Hashing k-mers from assembly\n";
+    std::cout << "  " << filename << "\n";
     int sequence_count = add_reference(filename, false);
     std::cout << "  " << sequence_count << " contigs, ";
     std::cout << m_kmers.size() << " k-mers\n";

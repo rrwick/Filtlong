@@ -69,12 +69,12 @@ int main(int argc, char **argv)
 
 
     // Read through references and save 16-mers.
-    if (args.assembly_set || args.illumina_reads_set) {
+    if (args.assembly_set || args.illumina_reads.size() > 0) {
         Kmers kmers;
         if (args.assembly_set)
             kmers.add_assembly_fasta(args.assembly);
-        if (args.illumina_reads_set)
-            kmers.add_read_fastq(args.illumina_reads);
+        if (args.illumina_reads.size() > 0)
+            kmers.add_read_fastqs(args.illumina_reads);
     }
 
     // Read through input reads once, storing them as Read objects and calculating their scores.

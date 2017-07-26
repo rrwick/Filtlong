@@ -20,6 +20,7 @@
 
 
 #include <string>
+#include <vector>
 #include <unordered_set>
 
 
@@ -28,7 +29,7 @@ class Kmers
 public:
     Kmers();
 
-    void add_read_fastq(std::string filename);
+    void add_read_fastqs(std::vector<std::string> filenames);
     void add_assembly_fasta(std::string filename);
     bool is_kmer_present(uint32_t kmer);
 

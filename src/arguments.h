@@ -20,6 +20,7 @@
 
 
 #include <string>
+#include <vector>
 
 
 enum ParsingResult {GOOD, BAD, HELP, VERSION};
@@ -38,7 +39,7 @@ public:
     long long target_bases;
     double keep_percent;
     std::string assembly;
-    std::string illumina_reads;
+    std::vector<std::string> illumina_reads;
     int min_length;
     double min_mean_q;
     double min_window_q;
@@ -52,7 +53,6 @@ public:
     bool target_bases_set;
     bool keep_percent_set;
     bool assembly_set;
-    bool illumina_reads_set;
     bool min_length_set;
     bool min_mean_q_set;
     bool min_window_q_set;

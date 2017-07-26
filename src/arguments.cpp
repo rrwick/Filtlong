@@ -94,9 +94,12 @@ Arguments::Arguments(int argc, char **argv) {
     s_arg assembly_arg(references_group, "assembly",
                        "reference assembly in FASTA format",
                         {"assembly"});
-    s_arg illumina_reads_arg(references_group, "illumina reads",
-                             "reference Illumina reads in FASTQ format",
-                             {"illumina_reads"});
+    s_arg illumina_reads_1_arg(references_group, "illumina reads 1",
+                               "reference Illumina reads in FASTQ format",
+                               {"illumina_reads_1"});
+    s_arg illumina_reads_2_arg(references_group, "illumina reads 2",
+                               "reference Illumina reads in FASTQ format",
+                               {"illumina_reads_2"});
 
     args::Group hard_cutoffs_group(parser, "NLhard cut-offs "    // The NL at the start results in a newline
                                            "(reads that fall below these thresholds are discarded):");
@@ -188,8 +191,10 @@ Arguments::Arguments(int argc, char **argv) {
     assembly_set = bool(assembly_arg);
     assembly = args::get(assembly_arg);
 
-    illumina_reads_set = bool(illumina_reads_arg);
-    illumina_reads = args::get(illumina_reads_arg);
+    if (bool(illumina_reads_1_arg))
+        illumina_reads.push_back(args::get(illumina_reads_1_arg));
+    if (bool(illumina_reads_2_arg))
+        illumina_reads.push_back(args::get(illumina_reads_2_arg));
 
     min_length_set = bool(min_length_arg);
     min_length = args::get(min_length_arg);
