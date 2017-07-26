@@ -19,6 +19,7 @@
 #include <iostream>
 #include "read.h"
 #include "arguments.h"
+#include "kmers.h"
 
 #define PROGRAM_VERSION "0.1.0"
 
@@ -65,7 +66,16 @@ int main(int argc, char **argv)
 //    std::cerr << "verbose: " << args.verbose << std::endl;
 
 
+
+
     // Read through references and save 16-mers.
+    if (args.assembly_set || args.illumina_reads_set) {
+        Kmers kmers;
+        if (args.assembly_set)
+            kmers.add_assembly_fasta(args.assembly);
+        if (args.illumina_reads_set)
+            kmers.add_read_fastq(args.illumina_reads);
+    }
 
     // Read through input reads once, storing them as Read objects and calculating their scores.
 

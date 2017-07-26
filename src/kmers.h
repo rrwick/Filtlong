@@ -34,7 +34,18 @@ public:
 
 private:
     std::unordered_set<uint32_t> m_kmers;
-    void add_reference(std::string filename, bool require_two_kmer_copies);
+    std::unordered_set<uint32_t> m_first_time_kmers;
+
+    int add_reference(std::string filename, bool require_two_kmer_copies);
+    void add_kmer_require_one_copy(uint32_t kmer);
+    void add_kmer_require_two_copies(uint32_t kmer);
+
+    uint32_t starting_kmer_to_bits_forward(char * sequence);
+    uint32_t starting_kmer_to_bits_reverse(char * sequence);
+
+    uint32_t base_to_bits_forward(char base);
+    uint32_t base_to_bits_reverse(char base);
 };
+
 
 #endif // KMERS_H
