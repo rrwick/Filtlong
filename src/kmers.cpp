@@ -27,29 +27,46 @@ KSEQ_INIT(gzFile, gzread)
 
 
 Kmers::Kmers() {
+    bloom_parameters parameters;
 
+    // TO DO: it might be worth experimenting with these values to see how it affects time and memory usage.
+    parameters.projected_element_count = 100000000;
+    parameters.false_positive_probability = 0.0001; // 1 in 10000
+    parameters.random_seed = 0xA5A5A5A5;
+
+    parameters.compute_optimal_parameters();
+
+    //Instantiate Bloom Filter
+    bloom = new bloom_filter(parameters);
+
+    required_kmer_copies = 4;
+}
+
+
+Kmers::~Kmers() {
+    delete bloom;
 }
 
 
 void Kmers::add_read_fastqs(std::vector<std::string> filenames) {
-    std::cerr << "Hashing k-mers from Illumina reads\n";
+    std::cerr << "\nHashing k-mers from Illumina reads\n";
 
     int sequence_count = 0;
     for (auto & filename : filenames) {
         std::cout << "  " << filename << "\n";
         sequence_count += add_reference(filename, true);
     }
-    std::cout << "  " << m_first_time_kmers.size() << " total k-mers, ";
-    std::cout << m_kmers.size() << " final k-mers\n";
+    std::cout << "  " << sequence_count << " reads, ";
+    std::cout << m_kmers.size() << " k-mers\n\n";
 }
 
 
 void Kmers::add_assembly_fasta(std::string filename) {
-    std::cerr << "Hashing k-mers from assembly\n";
+    std::cerr << "\nHashing k-mers from assembly\n";
     std::cout << "  " << filename << "\n";
     int sequence_count = add_reference(filename, false);
     std::cout << "  " << sequence_count << " contigs, ";
-    std::cout << m_kmers.size() << " k-mers\n";
+    std::cout << m_kmers.size() << " k-mers\n\n";
 }
 
 
@@ -61,22 +78,19 @@ int Kmers::add_reference(std::string filename, bool require_two_kmer_copies) {
     // We'll use a different k-mer adding function for assembly hashing and read hashing.
     void (Kmers::*add_kmer)(uint32_t);
     if (require_two_kmer_copies)
-        add_kmer = &Kmers::add_kmer_require_two_copies;
+        add_kmer = &Kmers::add_kmer_require_multiple_copies;
     else
         add_kmer = &Kmers::add_kmer_require_one_copy;
 
-    gzFile fp = gzopen(filename.c_str(), "r"); // STEP 2: open the file handler
-    kseq_t * seq = kseq_init(fp);              // STEP 3: initialize seq
-    while ((l = kseq_read(seq)) >= 0) {        // STEP 4: read sequence
+    gzFile fp = gzopen(filename.c_str(), "r");
+    kseq_t * seq = kseq_init(fp);
+    while ((l = kseq_read(seq)) >= 0) {
         if (l == -3)
             std::cerr << "Error reading " << filename << "\n";
         else {
             ++sequence_count;
-//            std::cout << "  name: " << seq->name.s;           // TEMP
-//            if (seq->comment.l)                               // TEMP
-//                std::cout << " " << seq->comment.s << "\n";   // TEMP
-//            std::cout << "  length: " << seq->seq.l << "\n";  // TEMP
 
+            // Can't get a 16-mer from a sequence shorter than 16 bp.
             if (seq->seq.l < 16)
                 continue;
 
@@ -89,10 +103,6 @@ int Kmers::add_reference(std::string filename, bool require_two_kmer_copies) {
             (this->*add_kmer)(forward_kmer);
             (this->*add_kmer)(reverse_kmer);
 
-//            std::bitset<32> x(forward_kmer);                  // TEMP
-//            std::bitset<32> y(reverse_kmer);                  // TEMP
-//            std::cout << x << " " << y << "\n";               // TEMP
-
             for (size_t i = 16; i < seq->seq.l; ++i) {
                 forward_kmer <<= 2;
                 forward_kmer |= base_to_bits_forward(sequence[i]);
@@ -102,17 +112,11 @@ int Kmers::add_reference(std::string filename, bool require_two_kmer_copies) {
 
                 (this->*add_kmer)(forward_kmer);
                 (this->*add_kmer)(reverse_kmer);
-
-//                std::bitset<32> x(forward_kmer);              // TEMP
-//                std::bitset<32> y(reverse_kmer);              // TEMP
-//                std::cout << x << " " << y << "\n";           // TEMP
             }
-//            std::cout << "\n";                                  // TEMP
         }
     }
-    kseq_destroy(seq);                         // STEP 5: destroy seq
-    gzclose(fp);                               // STEP 6: close the file handler
-
+    kseq_destroy(seq);
+    gzclose(fp);
     return sequence_count;
 }
 
@@ -122,11 +126,30 @@ void Kmers::add_kmer_require_one_copy(uint32_t kmer) {
 }
 
 
-void Kmers::add_kmer_require_two_copies(uint32_t kmer) {
-    if (m_first_time_kmers.find(kmer) != m_first_time_kmers.end())  // if the k-mer has been seen before...
-        m_kmers.insert(kmer);
-    else
-        m_first_time_kmers.insert(kmer);
+void Kmers::add_kmer_require_multiple_copies(uint32_t kmer) {
+    // If the kmer is already in the final set, then we can skip the rest of this function.
+    if (m_kmers.find(kmer) != m_kmers.end())
+        return;
+
+    // Check the bloom filter. If it's not in there, this is definitely the first time it's been seen.
+    if (!bloom->contains(kmer))
+        bloom->insert(kmer);
+
+    // If it's in the bloom filter, then it's probably been seen once before (though maybe not, based on the false
+    // positive rate of the bloom filter. Next we check the k-mer counts. If it's not in there, we say it's the second
+    // time the kmer's been seen.
+    else if (m_kmer_counts.find(kmer) == m_kmer_counts.end())
+        m_kmer_counts[kmer] = 2;
+
+    // If the k-mer is in the counts, then we increment its count. If the count is high enough, we add it to the k-mer
+    // set (and remove it from the counts to save some memory).
+    else {
+        int times_seen = ++m_kmer_counts[kmer];
+        if (times_seen >= required_kmer_copies) {
+            m_kmers.insert(kmer);
+            m_kmer_counts.erase(kmer);
+        }
+    }
 }
 
 

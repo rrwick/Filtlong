@@ -17,11 +17,17 @@
 
 
 #include <iostream>
+#include <zlib.h>
+#include <stdio.h>
+#include <vector>
+#include "kseq.h"
 #include "read.h"
 #include "arguments.h"
 #include "kmers.h"
 
 #define PROGRAM_VERSION "0.1.0"
+
+KSEQ_INIT(gzFile, gzread)
 
 
 int main(int argc, char **argv)
@@ -68,16 +74,41 @@ int main(int argc, char **argv)
 
 
 
-    // Read through references and save 16-mers.
+    // Read through references and save 16-mers. For assembly references, this will save all 16-mers in the assembly.
+    // For Illumina read references, the k-mer needs to appear a few times before it's added to the set.
+    Kmers kmers;
     if (args.assembly_set || args.illumina_reads.size() > 0) {
-        Kmers kmers;
         if (args.assembly_set)
             kmers.add_assembly_fasta(args.assembly);
         if (args.illumina_reads.size() > 0)
             kmers.add_read_fastqs(args.illumina_reads);
     }
 
-    // Read through input reads once, storing them as Read objects and calculating their scores.
+    // Read through input long reads once, storing them as Read objects and calculating their scores.
+    std::vector<Read> reads;
+    if (args.verbose)
+        print_read_table_header();
+    else
+        std::cerr << "Scoring long reads\n";
+    int l;
+    gzFile fp = gzopen(args.input_reads.c_str(), "r");
+    kseq_t * seq = kseq_init(fp);
+    while ((l = kseq_read(seq)) >= 0) {
+        if (l == -3)
+            std::cerr << "Error reading " << args.input_reads << "\n";
+        else {
+            reads.emplace_back(seq->name.s, seq->seq.s, seq->qual.s, seq->seq.l, &kmers, args.window_size);
+            if (args.verbose)
+                reads.back().print_table_row();
+        }
+    }
+    kseq_destroy(seq);
+    gzclose(fp);
+
+
+
+
+
 
     // Decide which reads will be outputted:
     //  * total up the bases in the input reads

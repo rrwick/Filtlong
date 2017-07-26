@@ -28,7 +28,9 @@
 class Read
 {
 public:
-    Read(std::string name, std::string seq, std::string quals, Kmers * kmers, int window_size);
+    Read(char * name, char * seq, char * quals, int length, Kmers * kmers, int window_size);
+
+    void print_table_row();
 
     std::string m_name;
     int m_length;
@@ -36,8 +38,11 @@ public:
     double m_window_quality;
 
 private:
-    double get_mean_quality(std::string * quals);
-    double get_window_quality(std::string * quals, int window_size);
+    double get_mean_quality(char * quals);
+    double get_window_quality(char * quals, int window_size);
 };
+
+
+void print_read_table_header();
 
 #endif // READ_H
