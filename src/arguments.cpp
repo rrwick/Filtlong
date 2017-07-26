@@ -79,49 +79,49 @@ Arguments::Arguments(int argc, char **argv) {
                                       "Input long reads to be filtered");
 
     args::Group thresholds_group(parser, "output thresholds:");
-    d_arg min_score_arg(thresholds_group, "min score",
+    d_arg min_score_arg(thresholds_group, "float",
                         "reads with a final score lower than this will be discarded",
-                        {"min_score"});
-    i_arg target_bases_arg(thresholds_group, "target bases",
+                        {'m', "min_score"});
+    i_arg target_bases_arg(thresholds_group, "int",
                            "keep only the best reads up to this many total bases",
-                           {"target_bases"});
-    d_arg keep_percent_arg(thresholds_group, "keep percent",
+                           {'t', "target_bases"});
+    d_arg keep_percent_arg(thresholds_group, "float",
                            "keep only this fraction of the best reads",
-                           {"keep_percent"});
+                           {'p', "keep_percent"});
 
     args::Group references_group(parser, "NLexternal references "   // The NL at the start results in a newline
             "(if provided, read quality will be determined using these instead of from the Phred scores):");
-    s_arg assembly_arg(references_group, "assembly",
+    s_arg assembly_arg(references_group, "file",
                        "reference assembly in FASTA format",
-                        {"assembly"});
-    s_arg illumina_reads_1_arg(references_group, "illumina reads 1",
-                               "reference Illumina reads in FASTQ format",
-                               {"illumina_reads_1"});
-    s_arg illumina_reads_2_arg(references_group, "illumina reads 2",
-                               "reference Illumina reads in FASTQ format",
-                               {"illumina_reads_2"});
+                        {'a', "assembly"});
+    s_arg illumina_1_arg(references_group, "file",
+                         "reference Illumina reads in FASTQ format",
+                         {'1', "illumina_1"});
+    s_arg illumina_2_arg(references_group, "file",
+                         "reference Illumina reads in FASTQ format",
+                         {'2', "illumina_2"});
 
     args::Group hard_cutoffs_group(parser, "NLhard cut-offs "    // The NL at the start results in a newline
                                            "(reads that fall below these thresholds are discarded):");
-    i_arg min_length_arg(hard_cutoffs_group, "min length",
+    i_arg min_length_arg(hard_cutoffs_group, "int",
                          "minimum length threshold",
                          {"min_length"});
-    d_arg min_mean_q_arg(hard_cutoffs_group, "min mean q",
+    d_arg min_mean_q_arg(hard_cutoffs_group, "float",
                          "minimum mean quality threshold",
                          {"min_mean_q"});
-    d_arg min_window_q_arg(hard_cutoffs_group, "min window q",
+    d_arg min_window_q_arg(hard_cutoffs_group, "float",
                            "minimum window quality threshold",
                            {"min_window_q"});
 
     args::Group score_weights_group(parser, "NLscore weights "    // The NL at the start results in a newline
                                             "(control the relative contribution of each score to the final read score):");
-    d_arg length_weight_arg(score_weights_group, "length weight",
+    d_arg length_weight_arg(score_weights_group, "float",
                             "weight given to the length score",
                             {"length_weight"});
-    d_arg mean_q_weight_arg(score_weights_group, "mean q weight",
+    d_arg mean_q_weight_arg(score_weights_group, "float",
                             "weight given to the mean quality score",
                             {"mean_q_weight"});
-    d_arg window_q_weight_arg(score_weights_group, "window q weight",
+    d_arg window_q_weight_arg(score_weights_group, "float",
                               "weight given to the window quality score",
                               {"window_q_weight"});
 
@@ -130,7 +130,7 @@ Arguments::Arguments(int argc, char **argv) {
     // E.g. half_length_score: reads of this length get a 50% score
 
     args::Group other_group(parser, "NLother:");    // The NL at the start results in a newline
-    i_arg window_size_arg(other_group, "window size",
+    i_arg window_size_arg(other_group, "int",
                           "size of sliding window used when measuring window quality",
                           {"window_size"});
     args::Flag verbose_arg(other_group, "verbose",
@@ -191,10 +191,10 @@ Arguments::Arguments(int argc, char **argv) {
     assembly_set = bool(assembly_arg);
     assembly = args::get(assembly_arg);
 
-    if (bool(illumina_reads_1_arg))
-        illumina_reads.push_back(args::get(illumina_reads_1_arg));
-    if (bool(illumina_reads_2_arg))
-        illumina_reads.push_back(args::get(illumina_reads_2_arg));
+    if (bool(illumina_1_arg))
+        illumina_reads.push_back(args::get(illumina_1_arg));
+    if (bool(illumina_2_arg))
+        illumina_reads.push_back(args::get(illumina_2_arg));
 
     min_length_set = bool(min_length_arg);
     min_length = args::get(min_length_arg);
