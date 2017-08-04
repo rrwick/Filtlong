@@ -32,9 +32,13 @@ public:
     Kmers();
     ~Kmers();
 
+    bool empty() {return m_kmers.size() == 0;}
+
     void add_read_fastqs(std::vector<std::string> filenames);
     void add_assembly_fasta(std::string filename);
     bool is_kmer_present(uint32_t kmer);
+
+
 
 private:
     std::unordered_set<uint32_t> m_kmers;

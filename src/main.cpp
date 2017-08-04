@@ -53,7 +53,11 @@ int main(int argc, char **argv)
 //    else { std::cerr << "keep_percent: not set" << std::endl; }
 //    if (args.assembly_set) { std::cerr << "assembly: " << args.assembly << std::endl; }
 //    else { std::cerr << "assembly: not set" << std::endl; }
-//    if (args.illumina_reads_set) { std::cerr << "illumina_reads: " << args.illumina_reads << std::endl; }
+//    if (args.illumina_reads.size() > 0) {
+//        std::cerr << "illumina_reads: " << std::endl;
+//        for (auto i : args.illumina_reads)
+//            std::cerr << "    " << i << std::endl;
+//    }
 //    else { std::cerr << "illumina_reads: not set" << std::endl; }
 //    if (args.min_length_set) { std::cerr << "min_length: " << args.min_length << std::endl; }
 //    else { std::cerr << "min_length: not set" << std::endl; }
@@ -67,9 +71,9 @@ int main(int argc, char **argv)
 //    else { std::cerr << "mean_q_weight: not set" << std::endl; }
 //    if (args.window_q_weight_set) { std::cerr << "window_q_weight: " << args.window_q_weight << std::endl; }
 //    else { std::cerr << "window_q_weight: not set" << std::endl; }
-//    if (args.window_size_set) { std::cerr << "window_size: " << args.window_size << std::endl; }
-//    else { std::cerr << "window_size: not set" << std::endl; }
+//    std::cerr << "window_size: " << args.window_size << std::endl;
 //    std::cerr << "verbose: " << args.verbose << std::endl;
+//    return 0;
 
 
 

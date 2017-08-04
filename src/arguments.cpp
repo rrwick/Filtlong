@@ -132,7 +132,7 @@ Arguments::Arguments(int argc, char **argv) {
     args::Group other_group(parser, "NLother:");    // The NL at the start results in a newline
     i_arg window_size_arg(other_group, "int",
                           "size of sliding window used when measuring window quality",
-                          {"window_size"});
+                          {"window_size"}, 250);
     args::Flag verbose_arg(other_group, "verbose",
                            "Print a table with info for each read",
                            {"verbose"});
@@ -214,7 +214,6 @@ Arguments::Arguments(int argc, char **argv) {
     window_q_weight_set = bool(window_q_weight_arg);
     window_q_weight = args::get(window_q_weight_arg);
 
-    window_size_set = bool(window_size_arg);
     window_size = args::get(window_size_arg);
 
     verbose = args::get(verbose_arg);

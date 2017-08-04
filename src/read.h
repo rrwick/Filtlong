@@ -21,6 +21,7 @@
 
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 #include "kmers.h"
 
@@ -28,18 +29,27 @@
 class Read
 {
 public:
-    Read(char * name, char * seq, char * quals, int length, Kmers * kmers, int window_size);
+    Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, int window_size);
 
     void print_table_row();
 
     std::string m_name;
+
     int m_length;
     double m_mean_quality;
     double m_window_quality;
 
+    double m_length_score;
+    double m_mean_quality_score;
+    double m_window_quality_score;
+    double m_final_score;
+    bool m_passed;
+
 private:
-    double get_mean_quality(char * quals);
-    double get_window_quality(char * quals, int window_size);
+    double get_mean_quality(std::vector<double> & qualities);
+    double get_window_quality(std::vector<double> & qualities, int window_size);
+
+    double qscore_to_quality(char qscore);
 };
 
 

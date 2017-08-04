@@ -59,7 +59,6 @@ public:
     bool length_weight_set;
     bool mean_q_weight_set;
     bool window_q_weight_set;
-    bool window_size_set;
 };
 
 #endif // ARGUMENTS_H
