@@ -65,18 +65,12 @@ int main(int argc, char **argv)
 //    else { std::cerr << "min_mean_q: not set" << std::endl; }
 //    if (args.min_window_q_set) { std::cerr << "min_window_q: " << args.min_window_q << std::endl; }
 //    else { std::cerr << "min_window_q: not set" << std::endl; }
-//    if (args.length_weight_set) { std::cerr << "length_weight: " << args.length_weight << std::endl; }
-//    else { std::cerr << "length_weight: not set" << std::endl; }
-//    if (args.mean_q_weight_set) { std::cerr << "mean_q_weight: " << args.mean_q_weight << std::endl; }
-//    else { std::cerr << "mean_q_weight: not set" << std::endl; }
-//    if (args.window_q_weight_set) { std::cerr << "window_q_weight: " << args.window_q_weight << std::endl; }
-//    else { std::cerr << "window_q_weight: not set" << std::endl; }
+//    std::cerr << "length_weight: " << args.length_weight << std::endl;
+//    std::cerr << "mean_q_weight: " << args.mean_q_weight << std::endl;
+//    std::cerr << "window_q_weight: " << args.window_q_weight << std::endl;
 //    std::cerr << "window_size: " << args.window_size << std::endl;
 //    std::cerr << "verbose: " << args.verbose << std::endl;
 //    return 0;
-
-
-
 
     // Read through references and save 16-mers. For assembly references, this will save all 16-mers in the assembly.
     // For Illumina read references, the k-mer needs to appear a few times before it's added to the set.
@@ -101,7 +95,8 @@ int main(int argc, char **argv)
         if (l == -3)
             std::cerr << "Error reading " << args.input_reads << "\n";
         else {
-            reads.emplace_back(seq->name.s, seq->seq.s, seq->qual.s, seq->seq.l, &kmers, args.window_size);
+            reads.emplace_back(seq->name.s, seq->seq.s, seq->qual.s, seq->seq.l, &kmers, args.window_size,
+                               args.length_weight, args.mean_q_weight, args.window_q_weight);
             if (args.verbose)
                 reads.back().print_table_row();
         }

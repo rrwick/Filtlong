@@ -24,7 +24,8 @@
 
 #include "read.h"
 
-Read::Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, int window_size) {
+Read::Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, int window_size,
+           double length_weight, double mean_q_weight, double window_q_weight) {
     m_name = name;
     m_length = length;
 
@@ -61,10 +62,11 @@ Read::Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, i
     m_mean_quality = get_mean_quality(qualities);
     m_window_quality = get_window_quality(qualities, window_size);
 
-    m_length_score = 0.0;
-    m_mean_quality_score = 0.0;
-    m_window_quality_score = 0.0;
-    m_final_score = 0.0;
+    m_length_score = get_length_score();
+    m_mean_quality_score = get_mean_quality_score();
+    m_window_quality_score = get_window_quality_score();
+    m_final_score = get_final_score(length_weight, mean_q_weight, window_q_weight);
+
     m_passed = true;
 }
 
@@ -98,17 +100,17 @@ double Read::get_mean_quality(std::vector<double> & qualities) {
 }
 
 
-double Read::get_window_quality(std::vector<double> & qualities, int window_size) {
+double Read::get_window_quality(std::vector<double> & qualities, size_t window_size) {
     if (qualities.size() <= window_size)
         return get_mean_quality(qualities);
 
     double sum = 0.0;
-    for (int i = 0; i < window_size; ++i)
+    for (size_t i = 0; i < window_size; ++i)
         sum += qualities[i];
     double window_quality = sum / window_size;
     double min_window_quality = window_quality;
 
-    for (int j = window_size; j < qualities.size(); ++j) {
+    for (size_t j = window_size; j < qualities.size(); ++j) {
         int i = j - window_size;
         window_quality -= qualities[i] / window_size;
         window_quality += qualities[j] / window_size;
@@ -118,6 +120,54 @@ double Read::get_window_quality(std::vector<double> & qualities, int window_size
     if (min_window_quality < 0.5 / window_size)
         min_window_quality = 0.0;
     return 100.0 * min_window_quality;
+}
+
+// At the moment, the half-score length is hard-coded to 5 kbp. Maybe this should be adjustable via a setting?
+// https://www.desmos.com/calculator
+// y=100\left(1+\frac{-a}{x+a}\right)
+double Read::get_length_score() {
+    double half_length_score = 5000.0;
+    return 100.0 * (1.0 + (-half_length_score / (m_length + half_length_score)));
+}
+
+
+// https://www.desmos.com/calculator
+// y=\left(-0.5\right)\left(1+\frac{1.5}{x-1.5}\right)
+double Read::get_mean_quality_score() {
+    double mean_quality = m_mean_quality / 100.0;
+    double adjusted_mean_quality = -0.5 * (1.0 + (1.5 / (mean_quality - 1.5)));
+    return 100.0 * adjusted_mean_quality;
+}
+
+
+// https://www.desmos.com/calculator
+// y=\left(\frac{1}{3}+1\right)\left(1-\frac{\frac{1}{3}}{x+\frac{1}{3}}\right)
+double Read::get_window_quality_score() {
+    double ratio = m_window_quality / m_mean_quality;
+    if (ratio > 1.0)
+        ratio = 1.0;
+    double adjusted_ratio = 1.333 * (1.0 - (0.333 / (ratio + 0.333)));
+    return adjusted_ratio * m_mean_quality;
+}
+
+
+double Read::get_final_score(double length_weight, double mean_q_weight, double window_q_weight) {
+
+    // Weighted arithmetic mean
+    double total_weight = length_weight + mean_q_weight + window_q_weight;
+    double final_score = 0.0;
+    final_score += (length_weight / total_weight) * m_length_score;
+    final_score += (mean_q_weight / total_weight) * m_mean_quality_score;
+    final_score += (window_q_weight / total_weight) * m_window_quality_score;
+    return final_score;
+
+//    // Weighted geometric mean
+//    double weighted_length_score = pow(m_length_score, length_weight);
+//    double weighted_mean_quality_score = pow(m_mean_quality_score, mean_q_weight);
+//    double weighted_window_quality_score = pow(m_window_quality_score, window_q_weight);
+//    double product = weighted_length_score * weighted_mean_quality_score * weighted_window_quality_score;
+//    double total_weight = length_weight + mean_q_weight + window_q_weight;
+//    return pow(product, 1.0 / total_weight);
 }
 
 

@@ -116,14 +116,14 @@ Arguments::Arguments(int argc, char **argv) {
     args::Group score_weights_group(parser, "NLscore weights "    // The NL at the start results in a newline
                                             "(control the relative contribution of each score to the final read score):");
     d_arg length_weight_arg(score_weights_group, "float",
-                            "weight given to the length score",
-                            {"length_weight"});
+                            "weight given to the length score (default: 1)",
+                            {"length_weight"}, 1.0);
     d_arg mean_q_weight_arg(score_weights_group, "float",
-                            "weight given to the mean quality score",
-                            {"mean_q_weight"});
+                            "weight given to the mean quality score (default: 1)",
+                            {"mean_q_weight"}, 1.0);
     d_arg window_q_weight_arg(score_weights_group, "float",
-                              "weight given to the window quality score",
-                              {"window_q_weight"});
+                              "weight given to the window quality score (default: 1)",
+                              {"window_q_weight"}, 1.0);
 
     // Might need a scoring options group here as well. This could have parameters to adjust how lengths and qualities
     // are translated into scores.
@@ -131,7 +131,7 @@ Arguments::Arguments(int argc, char **argv) {
 
     args::Group other_group(parser, "NLother:");    // The NL at the start results in a newline
     i_arg window_size_arg(other_group, "int",
-                          "size of sliding window used when measuring window quality",
+                          "size of sliding window used when measuring window quality (default: 250)",
                           {"window_size"}, 250);
     args::Flag verbose_arg(other_group, "verbose",
                            "Print a table with info for each read",
@@ -205,13 +205,8 @@ Arguments::Arguments(int argc, char **argv) {
     min_window_q_set = bool(min_window_q_arg);
     min_window_q = args::get(min_window_q_arg);
 
-    length_weight_set = bool(length_weight_arg);
     length_weight = args::get(length_weight_arg);
-
-    mean_q_weight_set = bool(mean_q_weight_arg);
     mean_q_weight = args::get(mean_q_weight_arg);
-
-    window_q_weight_set = bool(window_q_weight_arg);
     window_q_weight = args::get(window_q_weight_arg);
 
     window_size = args::get(window_size_arg);

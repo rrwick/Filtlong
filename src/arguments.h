@@ -56,9 +56,6 @@ public:
     bool min_length_set;
     bool min_mean_q_set;
     bool min_window_q_set;
-    bool length_weight_set;
-    bool mean_q_weight_set;
-    bool window_q_weight_set;
 };
 
 #endif // ARGUMENTS_H
