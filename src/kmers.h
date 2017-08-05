@@ -38,7 +38,11 @@ public:
     void add_assembly_fasta(std::string filename);
     bool is_kmer_present(uint32_t kmer);
 
+    uint32_t starting_kmer_to_bits_forward(char * sequence);
+    uint32_t starting_kmer_to_bits_reverse(char * sequence);
 
+    uint32_t base_to_bits_forward(char base);
+    uint32_t base_to_bits_reverse(char base);
 
 private:
     std::unordered_set<uint32_t> m_kmers;
@@ -49,12 +53,6 @@ private:
     int add_reference(std::string filename, bool require_two_kmer_copies);
     void add_kmer_require_one_copy(uint32_t kmer);
     void add_kmer_require_multiple_copies(uint32_t kmer);
-
-    uint32_t starting_kmer_to_bits_forward(char * sequence);
-    uint32_t starting_kmer_to_bits_reverse(char * sequence);
-
-    uint32_t base_to_bits_forward(char base);
-    uint32_t base_to_bits_reverse(char base);
 };
 
 
