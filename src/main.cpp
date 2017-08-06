@@ -45,8 +45,6 @@ int main(int argc, char **argv)
 //    // TEMP - check argument parsing
 //    std::cerr << "\n\n";
 //    std::cerr << "input_reads: " << args.input_reads << std::endl;
-//    if (args.min_score_set) { std::cerr << "min_score: " << args.min_score << std::endl; }
-//    else { std::cerr << "min_score: not set" << std::endl; }
 //    if (args.target_bases_set) { std::cerr << "target_bases: " << args.target_bases << std::endl; }
 //    else { std::cerr << "target_bases: not set" << std::endl; }
 //    if (args.keep_percent_set) { std::cerr << "keep_percent: " << args.keep_percent << std::endl; }
@@ -68,6 +66,9 @@ int main(int argc, char **argv)
 //    std::cerr << "length_weight: " << args.length_weight << std::endl;
 //    std::cerr << "mean_q_weight: " << args.mean_q_weight << std::endl;
 //    std::cerr << "window_q_weight: " << args.window_q_weight << std::endl;
+//    std::cerr << "trim: " << args.trim << std::endl;
+//    if (args.split_set) { std::cerr << "split: " << args.split << std::endl; }
+//    else { std::cerr << "split: not set" << std::endl; }
 //    std::cerr << "window_size: " << args.window_size << std::endl;
 //    std::cerr << "verbose: " << args.verbose << std::endl;
 //    return 0;

@@ -35,27 +35,37 @@ public:
 
     std::string input_reads;
 
-    double min_score;
+    bool target_bases_set;
     long long target_bases;
+
+    bool keep_percent_set;
     double keep_percent;
+
+    bool min_length_set;
+    int min_length;
+
+    bool min_mean_q_set;
+    double min_mean_q;
+
+    bool min_window_q_set;
+    double min_window_q;
+
+    bool assembly_set;
     std::string assembly;
     std::vector<std::string> illumina_reads;
-    int min_length;
-    double min_mean_q;
-    double min_window_q;
+
     double length_weight;
     double mean_q_weight;
     double window_q_weight;
+
+    bool trim;
+
+    bool split_set;
+    int split;
+
     int window_size;
     bool verbose;
 
-    bool min_score_set;
-    bool target_bases_set;
-    bool keep_percent_set;
-    bool assembly_set;
-    bool min_length_set;
-    bool min_mean_q_set;
-    bool min_window_q_set;
 };
 
 #endif // ARGUMENTS_H

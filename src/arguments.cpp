@@ -46,6 +46,7 @@ struct DoublesReader
 typedef args::ValueFlag<double, DoublesReader> d_arg;
 typedef args::ValueFlag<long long> i_arg;
 typedef args::ValueFlag<std::string> s_arg;
+typedef args::Flag f_arg;
 
 
 Arguments::Arguments(int argc, char **argv) {
@@ -79,15 +80,21 @@ Arguments::Arguments(int argc, char **argv) {
                                       "Input long reads to be filtered");
 
     args::Group thresholds_group(parser, "output thresholds:");
-    d_arg min_score_arg(thresholds_group, "float",
-                        "reads with a final score lower than this will be discarded",
-                        {'m', "min_score"});
     i_arg target_bases_arg(thresholds_group, "int",
                            "keep only the best reads up to this many total bases",
                            {'t', "target_bases"});
     d_arg keep_percent_arg(thresholds_group, "float",
                            "keep only this fraction of the best reads",
                            {'p', "keep_percent"});
+    i_arg min_length_arg(thresholds_group, "int",
+                         "minimum length threshold",
+                         {"min_length"});
+    d_arg min_mean_q_arg(thresholds_group, "float",
+                         "minimum mean quality threshold",
+                         {"min_mean_q"});
+    d_arg min_window_q_arg(thresholds_group, "float",
+                           "minimum window quality threshold",
+                           {"min_window_q"});
 
     args::Group references_group(parser, "NLexternal references "   // The NL at the start results in a newline
             "(if provided, read quality will be determined using these instead of from the Phred scores):");
@@ -100,18 +107,6 @@ Arguments::Arguments(int argc, char **argv) {
     s_arg illumina_2_arg(references_group, "file",
                          "reference Illumina reads in FASTQ format",
                          {'2', "illumina_2"});
-
-    args::Group hard_cutoffs_group(parser, "NLhard cut-offs "    // The NL at the start results in a newline
-                                           "(reads that fall below these thresholds are discarded):");
-    i_arg min_length_arg(hard_cutoffs_group, "int",
-                         "minimum length threshold",
-                         {"min_length"});
-    d_arg min_mean_q_arg(hard_cutoffs_group, "float",
-                         "minimum mean quality threshold",
-                         {"min_mean_q"});
-    d_arg min_window_q_arg(hard_cutoffs_group, "float",
-                           "minimum window quality threshold",
-                           {"min_window_q"});
 
     args::Group score_weights_group(parser, "NLscore weights "    // The NL at the start results in a newline
                                             "(control the relative contribution of each score to the final read score):");
@@ -129,18 +124,28 @@ Arguments::Arguments(int argc, char **argv) {
     // are translated into scores.
     // E.g. half_length_score: reads of this length get a 50% score
 
+    args::Group manipulation_group(parser, "NLread manipulation:");    // The NL at the start results in a newline
+    f_arg trim_arg(manipulation_group, "trim",
+                   "trim reads non-k-mer-matching bases from start/end of reads",
+                   {"trim"});
+    i_arg split_arg(manipulation_group, "split",
+                    "split reads when this many bases lack a k-mer match",
+                    {"split"});
+
     args::Group other_group(parser, "NLother:");    // The NL at the start results in a newline
     i_arg window_size_arg(other_group, "int",
                           "size of sliding window used when measuring window quality (default: 250)",
                           {"window_size"}, 250);
-    args::Flag verbose_arg(other_group, "verbose",
-                           "Print a table with info for each read",
-                           {"verbose"});
-    args::Flag version_arg(other_group, "version",
-                           "Display the program version and quit",
-                           {"version"});
+    f_arg verbose_arg(other_group, "verbose",
+                      "print a table with info for each read",
+                      {"verbose"});
+    f_arg version_arg(other_group, "version",
+                      "display the program version and quit",
+                      {"version"});
 
-    args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
+    args::HelpFlag help(parser, "help",
+                        "display this help menu",
+                        {'h', "help"});
 
 
     parsing_result = GOOD;
@@ -179,9 +184,6 @@ Arguments::Arguments(int argc, char **argv) {
         return;
     }
 
-    min_score_set = bool(min_score_arg);
-    min_score = args::get(min_score_arg);
-
     target_bases_set = bool(target_bases_arg);
     target_bases = args::get(target_bases_arg);
 
@@ -209,7 +211,23 @@ Arguments::Arguments(int argc, char **argv) {
     mean_q_weight = args::get(mean_q_weight_arg);
     window_q_weight = args::get(window_q_weight_arg);
 
-    window_size = args::get(window_size_arg);
+    trim = args::get(trim_arg);
 
+    split_set = bool(split_arg);
+    split = args::get(split_arg);
+
+    window_size = args::get(window_size_arg);
     verbose = args::get(verbose_arg);
+
+    bool some_reference = (illumina_reads.size() > 0 || assembly_set);
+    if (trim && !some_reference) {
+        std::cerr << "Error: assembly or read reference is required to use --trim" << "\n";
+        parsing_result = BAD;
+        return;
+    }
+    if (split_set && !some_reference) {
+        std::cerr << "Error: assembly or read reference is required to use --split" << "\n";
+        parsing_result = BAD;
+        return;
+    }
 }
