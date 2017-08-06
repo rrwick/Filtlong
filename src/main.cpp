@@ -111,11 +111,13 @@ int main(int argc, char **argv)
         // Gather up pointers to the reads. If a read has been trimmed/split, it's these child reads which we use, not
         // the parent read.
         std::vector<Read *> read_pointers;
-        for (auto read : reads) {
-            if (read.child_reads.size() == 0)
-                read_pointers.push_back(&read);
+        for (size_t i = 0; i < reads.size(); ++i) {
+            Read * read = &(reads[i]);
+            if (read->child_reads.size() == 0) {
+                read_pointers.push_back(read);
+            }
             else {
-                for (auto child : read.child_reads)
+                for (auto child : read->child_reads)
                     read_pointers.push_back(child);
             }
         }
@@ -128,6 +130,8 @@ int main(int argc, char **argv)
             if (read->m_passed)
                 passed_bases += read->m_length;
         }
+        std::cerr << "\n";
+        std::cerr << read_pointers.size() << " reads (" << total_bases << " bp)\n";
 
         // Determine how many bases we should keep.
         long long target_bases;
@@ -159,13 +163,14 @@ int main(int argc, char **argv)
                 else if (read->m_passed)
                     bases_so_far += read->m_length;
             }
+            std::cerr << "Keeping " << bases_so_far << " bp\n";
         }
     }
 
     // Read through input reads again, this time outputting the keepers to stdout and ignoring the failures.
     // If in verbose mode, display a table as we go.
     if (!args.verbose)
-        std::cerr << "Outputting passed long reads\n";
+        std::cerr << "\nOutputting passed long reads\n";
     fp = gzopen(args.input_reads.c_str(), "r");
     seq = kseq_init(fp);
     while ((l = kseq_read(seq)) >= 0) {
