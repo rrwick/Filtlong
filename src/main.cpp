@@ -84,9 +84,7 @@ int main(int argc, char **argv)
 
     // Read through input long reads once, storing them as Read objects and calculating their scores.
     std::vector<Read> reads;
-    if (args.verbose)
-        print_read_table_header();
-    else
+    if (!args.verbose)
         std::cerr << "Scoring long reads\n";
     int l;
     gzFile fp = gzopen(args.input_reads.c_str(), "r");
@@ -98,7 +96,7 @@ int main(int argc, char **argv)
             reads.emplace_back(seq->name.s, seq->seq.s, seq->qual.s, seq->seq.l, &kmers, args.window_size,
                                args.length_weight, args.mean_q_weight, args.window_q_weight);
             if (args.verbose)
-                reads.back().print_table_row();
+                reads.back().print_verbose_read_info();
         }
     }
     kseq_destroy(seq);

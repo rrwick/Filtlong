@@ -32,17 +32,14 @@ public:
     Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, int window_size,
          double length_weight, double mean_q_weight, double window_q_weight);
 
-    void print_table_row();
+    void print_verbose_read_info();
 
     std::string m_name;
 
     int m_length;
+    double m_length_score;
     double m_mean_quality;
     double m_window_quality;
-
-    double m_length_score;
-    double m_mean_quality_score;
-    double m_window_quality_score;
     double m_final_score;
     bool m_passed;
 
@@ -51,14 +48,10 @@ private:
     double get_window_quality(std::vector<double> & qualities, size_t window_size);
 
     double get_length_score();
-    double get_mean_quality_score();
-    double get_window_quality_score();
     double get_final_score(double length_weight, double mean_q_weight, double window_q_weight);
 
     double qscore_to_quality(char qscore);
 };
 
-
-void print_read_table_header();
 
 #endif // READ_H

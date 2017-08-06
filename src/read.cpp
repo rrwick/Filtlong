@@ -20,6 +20,7 @@
 #include <math.h>
 #include <limits>
 #include <sstream>
+#include <string>
 #include <iomanip>
 
 #include "read.h"
@@ -63,8 +64,6 @@ Read::Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, i
     m_window_quality = get_window_quality(qualities, window_size);
 
     m_length_score = get_length_score();
-    m_mean_quality_score = get_mean_quality_score();
-    m_window_quality_score = get_window_quality_score();
     m_final_score = get_final_score(length_weight, mean_q_weight, window_q_weight);
 
     m_passed = true;
@@ -74,21 +73,34 @@ Read::Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, i
 std::string double_to_string(double a) {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2) << a;
-    return ss.str();
+    std::string s = ss.str();
+    if (s.size() < 5)
+        return std::string(5 - s.size(), ' ') + ss.str();
+    else
+        return ss.str();
 }
 
 
-void Read::print_table_row() {
-    std::cerr << m_name << "\t";
-    std::cerr << m_length << "\t";
-    std::cerr << double_to_string(m_mean_quality) << "\t";
-    std::cerr << double_to_string(m_window_quality) << "\t";
-    std::cerr << double_to_string(m_length_score) << "\t";
-    std::cerr << double_to_string(m_mean_quality_score) << "\t";
-    std::cerr << double_to_string(m_window_quality_score) << "\t";
-    std::cerr << double_to_string(m_final_score) << "\t";
-    std::cerr << m_passed << "\t";
-    std::cerr << "\n";
+std::string pad(int num, const size_t width)
+{
+    std::string s = std::to_string(num);
+    if (width > s.size())
+        return s + std::string(width - s.size(), ' ');
+    else
+        return s;
+}
+
+
+void Read::print_verbose_read_info() {
+    std::cerr << "\n" << m_name << "\n";
+
+    std::cerr << "            length = " << pad(m_length, 11);
+    std::cerr << "length score = " << double_to_string(m_length_score) << "\n";
+
+    std::cerr << "      mean quality = " << double_to_string(m_mean_quality);
+    std::cerr << "    window quality = " << double_to_string(m_window_quality);
+
+    std::cerr << "   final score = " << double_to_string(m_final_score) << "\n";
 }
 
 
@@ -131,61 +143,28 @@ double Read::get_length_score() {
 }
 
 
-// https://www.desmos.com/calculator
-// y=\left(-0.5\right)\left(1+\frac{1.5}{x-1.5}\right)
-double Read::get_mean_quality_score() {
-    double mean_quality = m_mean_quality / 100.0;
-    double adjusted_mean_quality = -0.5 * (1.0 + (1.5 / (mean_quality - 1.5)));
-    return 100.0 * adjusted_mean_quality;
-}
-
-
-// https://www.desmos.com/calculator
-// y=\left(\frac{1}{3}+1\right)\left(1-\frac{\frac{1}{3}}{x+\frac{1}{3}}\right)
-double Read::get_window_quality_score() {
-    double ratio = m_window_quality / m_mean_quality;
-    if (ratio > 1.0)
-        ratio = 1.0;
-    double adjusted_ratio = 1.333 * (1.0 - (0.333 / (ratio + 0.333)));
-    return adjusted_ratio * m_mean_quality;
-}
-
-
+// The final score is a weighted geometric mean of the length score and the mean quality. It is then scaled down using
+// the window quality.
 double Read::get_final_score(double length_weight, double mean_q_weight, double window_q_weight) {
 
-    // Weighted arithmetic mean
-    double total_weight = length_weight + mean_q_weight + window_q_weight;
-    double final_score = 0.0;
-    final_score += (length_weight / total_weight) * m_length_score;
-    final_score += (mean_q_weight / total_weight) * m_mean_quality_score;
-    final_score += (window_q_weight / total_weight) * m_window_quality_score;
-    return final_score;
+    // First get the weighted geometric mean of the length score and the mean quality.
+    double product = pow(m_length_score, length_weight) * pow(m_mean_quality, mean_q_weight);
+    double total_weight = length_weight + mean_q_weight;
+    double final_score = pow(product, 1.0 / total_weight);
 
-//    // Weighted geometric mean
-//    double weighted_length_score = pow(m_length_score, length_weight);
-//    double weighted_mean_quality_score = pow(m_mean_quality_score, mean_q_weight);
-//    double weighted_window_quality_score = pow(m_window_quality_score, window_q_weight);
-//    double product = weighted_length_score * weighted_mean_quality_score * weighted_window_quality_score;
-//    double total_weight = length_weight + mean_q_weight + window_q_weight;
-//    return pow(product, 1.0 / total_weight);
+    // Now scale that down using the ratio of window quality to mean quality.
+    double scaling_factor = m_window_quality / m_mean_quality;
+    if (scaling_factor > 1.0)
+        scaling_factor = 1.0;
+    total_weight = length_weight + mean_q_weight + window_q_weight;
+    double window_weight_fraction = window_q_weight / total_weight;
+    double non_window_weight_fraction = 1.0 - window_weight_fraction;
+    scaling_factor = (1.0 * non_window_weight_fraction) + (scaling_factor * window_weight_fraction);
+    return final_score * scaling_factor;
 }
 
 
 double Read::qscore_to_quality(char qscore) {
     int q = qscore - 33;
     return 1.0 - pow(10.0, -q / 10.0);
-}
-
-
-void print_read_table_header() {
-    std::cerr << "Read name" << "\t";
-    std::cerr << "Length" << "\t";
-    std::cerr << "Mean quality" << "\t";
-    std::cerr << "Window quality" << "\t";
-    std::cerr << "Length score" << "\t";
-    std::cerr << "Mean quality score" << "\t";
-    std::cerr << "Window quality score" << "\t";
-    std::cerr << "Final score" << "\t";
-    std::cerr << "Passed";
-    std::cerr << "\n";
 }
