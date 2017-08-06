@@ -25,9 +25,12 @@
 
 #include "read.h"
 
-Read::Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, Arguments * args) {
+Read::Read(std::string name, char * seq, char * qscores, int length, Kmers * kmers, Arguments * args) {
     m_name = name;
     m_length = length;
+
+    m_first_base_in_kmer = -1;
+    m_last_base_in_kmer = -1;
 
     std::vector<double> qualities;
 
@@ -74,22 +77,79 @@ Read::Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, A
     else if (m_window_quality < args->min_window_q)
         m_passed = false;
 
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
-    // TO DO: trimming/splitting
+    m_first_base_in_kmer = -1;
+    m_last_base_in_kmer = -1;
+    if (!kmers->empty()) {
+        for (int i = 0; i < length; ++i) {
+            if (qualities[i] != 0) {
+                if (m_first_base_in_kmer == -1)
+                    m_first_base_in_kmer = i;
+                m_last_base_in_kmer = i + 1;
+            }
+        }
+
+        if (args->trim || args->split_set) {
+
+            // Look at qualities to define 'bad ranges' of the read.
+            if (args->split_set) {
+                int i = 0;
+                while (i < length) {
+                    if (qualities[i] == 0.0) {
+                        int bad_start = i;
+                        while (i < length and qualities[i] == 0.0)
+                            ++i;
+                        int bad_end = i;
+                        if (bad_end - bad_start >= args->split)
+                            m_bad_ranges.push_back(std::pair<int,int>(bad_start, bad_end));
+                    }
+                    else
+                        ++i;
+                }
+            }
+
+            // If we're trimming, add the trimmed parts as bad ranges (unless they are already in there).
+            if (args->trim) {
+                if (m_first_base_in_kmer > 0) {
+                    std::pair<int,int> trim_start(0, m_first_base_in_kmer);
+                    if (m_bad_ranges.size() == 0 || m_bad_ranges.front() != trim_start)
+                        m_bad_ranges.insert(m_bad_ranges.begin(), trim_start);
+                }
+                if (m_last_base_in_kmer != -1 && m_last_base_in_kmer < length) {
+                    std::pair<int,int> trim_end(m_last_base_in_kmer, length);
+                    if (m_bad_ranges.size() == 0 || m_bad_ranges.back() != trim_end)
+                        m_bad_ranges.push_back(trim_end);
+                }
+            }
+
+            if (m_bad_ranges.size() > 0) {
+                int range_start = 0;
+                int range_end;
+                for (auto bad_range : m_bad_ranges) {
+                    range_end = bad_range.first;
+                    if (range_end - range_start > 0)
+                        m_child_read_ranges.push_back(std::pair<int,int>(range_start, range_end));
+                    range_start = bad_range.second;
+                }
+                range_end = length;
+                if (range_end - range_start > 0)
+                    m_child_read_ranges.push_back(std::pair<int,int>(range_start, range_end));
+                for (size_t i = 0; i < m_child_read_ranges.size(); ++i) {
+                    int child_start = m_child_read_ranges[i].first;
+                    int child_length = m_child_read_ranges[i].second - child_start;
+                    std::string child_name = m_name + "_part_" + std::to_string(i+1);
+                    Read * child = new Read(child_name, seq + child_start, qscores + child_start, child_length,
+                                            kmers, args);
+                    m_child_reads.push_back(child);
+                }
+            }
+        }
+    }
+}
+
+
+Read::~Read() {
+    for (auto child : m_child_reads)
+        delete child;
 }
 
 
@@ -124,6 +184,29 @@ void Read::print_verbose_read_info() {
     std::cerr << "    window quality = " << double_to_string(m_window_quality);
 
     std::cerr << "   final score = " << double_to_string(m_final_score) << "\n";
+
+    if (m_first_base_in_kmer != -1)
+        std::cerr << "       k-mer range = " << m_first_base_in_kmer << "-" << m_last_base_in_kmer << "\n";
+    if (m_bad_ranges.size() > 0) {
+        std::cerr << "        bad ranges = ";
+        for (size_t i = 0; i < m_bad_ranges.size(); ++i) {
+            std::cerr << m_bad_ranges[i].first << "-" << m_bad_ranges[i].second;
+            if (i < m_bad_ranges.size() - 1)
+                std::cerr << ", ";
+        }
+        std::cerr << "\n";
+    }
+    if (m_child_read_ranges.size() > 0) {
+        std::cerr << "      child ranges = ";
+        for (size_t i = 0; i < m_child_read_ranges.size(); ++i) {
+            std::cerr << m_child_read_ranges[i].first << "-" << m_child_read_ranges[i].second;
+            if (i < m_child_read_ranges.size() - 1)
+                std::cerr << ", ";
+        }
+        std::cerr << "\n";
+    }
+    for (auto child : m_child_reads)
+        child->print_verbose_read_info();
 }
 
 

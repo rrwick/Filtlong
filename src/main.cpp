@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <vector>
 #include <limits>
+#include <unordered_map>
+#include <utility>
 
 #include "kseq.h"
 #include "read.h"
@@ -86,7 +88,10 @@ int main(int argc, char **argv)
     }
 
     // Read through input long reads once, storing them as Read objects and calculating their scores.
-    std::vector<Read> reads;
+    // While we go, make sure there are no duplicate read names. Quit with an error if so.
+    long long total_bases = 0;
+    std::vector<Read*> reads;
+    std::unordered_map<std::string, Read*> read_dict;
     if (!args.verbose)
         std::cerr << "Scoring long reads\n";
     int l;
@@ -96,42 +101,62 @@ int main(int argc, char **argv)
         if (l == -3)
             std::cerr << "Error reading " << args.input_reads << "\n";
         else {
-            reads.emplace_back(seq->name.s, seq->seq.s, seq->qual.s, seq->seq.l, &kmers, &args);
+            total_bases += seq->seq.l;
+            std::string read_name = seq->name.s;
+            Read * read = new Read(read_name, seq->seq.s, seq->qual.s, seq->seq.l, &kmers, &args);
+            reads.push_back(read);
             if (args.verbose)
-                reads.back().print_verbose_read_info();
+                read->print_verbose_read_info();
+
+            if (read_dict.find(read->m_name) != read_dict.end()) {
+                std::cerr << "Error: duplicate read name: " << read->m_name << "\n";
+                return 0;
+            }
+            read_dict[read->m_name] = read;
         }
     }
     kseq_destroy(seq);
     gzclose(fp);
+    std::cerr << reads.size() << " reads (" << total_bases << " bp)\n";
+
+    // Gather up reads to output. If a read has been trimmed/split, it's these child reads which we use, not the
+    // parent read.
+    std::vector<Read*> reads2;
+    for (auto read : reads) {
+        if (read->m_child_reads.size() == 0) {
+            reads2.push_back(read);
+        }
+        else {
+            for (auto child : read->m_child_reads)
+                reads2.push_back(child);
+        }
+    }
+
+    // If --trim or --split was used, display some summary info here.
+    if (args.trim || args.split_set) {
+        long long total_after_trim_split = 0;
+        for (auto read : reads2)
+            total_after_trim_split += read->m_length;
+        if (args.trim && args.split_set)
+            std::cerr << "After trimming and splitting: ";
+        else if (args.trim)
+            std::cerr << "After trimming: ";
+        else
+            std::cerr << "After splitting: ";
+        std::cerr << reads2.size() << " reads (" << total_after_trim_split << " bp)\n";
+    }
+    std::cerr << "\n";
 
     // If the user set thresholds using either --target_bases or --keep_percent, then we need to see which additional
     // reads should be labelled as failed.
     if (args.target_bases_set || args.keep_percent_set) {
 
-        // Gather up pointers to the reads. If a read has been trimmed/split, it's these child reads which we use, not
-        // the parent read.
-        std::vector<Read *> read_pointers;
-        for (size_t i = 0; i < reads.size(); ++i) {
-            Read * read = &(reads[i]);
-            if (read->child_reads.size() == 0) {
-                read_pointers.push_back(read);
-            }
-            else {
-                for (auto child : read->child_reads)
-                    read_pointers.push_back(child);
-            }
-        }
-
         // See how many bases have already been passed.
-        long long total_bases = 0;
         long long passed_bases = 0;
-        for (auto read : read_pointers) {
-            total_bases += read->m_length;
+        for (auto read : reads2) {
             if (read->m_passed)
                 passed_bases += read->m_length;
         }
-        std::cerr << "\n";
-        std::cerr << read_pointers.size() << " reads (" << total_bases << " bp)\n";
 
         // Determine how many bases we should keep.
         long long target_bases;
@@ -152,12 +177,12 @@ int main(int argc, char **argv)
         }
         else {
             // Sort reads from best to worst.
-            std::sort(read_pointers.begin(), read_pointers.end(),
+            std::sort(reads2.begin(), reads2.end(),
                       [](const Read* a, const Read* b) {return a->m_final_score > b->m_final_score;});
 
             // Fail all reads after the threshold has been met.
             long long bases_so_far = 0;
-            for (auto read : read_pointers) {
+            for (auto read : reads2) {
                 if (bases_so_far > target_bases)
                     read->m_passed = false;
                 else if (read->m_passed)
@@ -177,11 +202,50 @@ int main(int argc, char **argv)
         if (l == -3)
             std::cerr << "Error reading " << args.input_reads << "\n";
         else {
-//            seq->name.s;
+            Read * read = read_dict[seq->name.s];
+
+            if (read->m_child_reads.size() == 0) {
+                if (read->m_passed) {
+                    std::cout << "@" << seq->name.s;
+                    if (seq->comment.l > 0)
+                        std::cout << " " << seq->comment.s;
+                    std::cout << "\n";
+                    std::cout << seq->seq.s << "\n";
+                    std::cout << "+\n";
+                    std::cout << seq->qual.s << "\n";
+                }
+            }
+            else {
+                for (size_t i = 0; i < read->m_child_reads.size(); ++i) {
+                    Read * child_read = read->m_child_reads[i];
+                    if (child_read->m_passed) {
+                        std::pair<int,int> child_read_range = read->m_child_read_ranges[i];
+                        int start = child_read_range.first;
+                        int end = child_read_range.second;
+                        int length = end - start;
+                        if (length > 0) {
+                            std::cout << "@" << seq->name.s << "_part_" << (i+1);
+                            if (seq->comment.l > 0)
+                                std::cout << " " << seq->comment.s;
+                            std::cout << "\n";
+
+                            std::string seq_str = seq->seq.s;
+                            std::string qual_str = seq->qual.s;
+                            std::cout << seq_str.substr(start, length) << "\n";
+                            std::cout << "+\n";
+                            std::cout << qual_str.substr(start, length) << "\n";
+                        }
+                    }
+                }
+            }
         }
     }
     kseq_destroy(seq);
     gzclose(fp);
+
+    // Clean up.
+    for (auto read : reads)
+        delete read;
 
     return 0;
 }
