@@ -25,8 +25,7 @@
 
 #include "read.h"
 
-Read::Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, int window_size,
-           double length_weight, double mean_q_weight, double window_q_weight) {
+Read::Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, Arguments * args) {
     m_name = name;
     m_length = length;
 
@@ -61,12 +60,36 @@ Read::Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, i
     }
 
     m_mean_quality = get_mean_quality(qualities);
-    m_window_quality = get_window_quality(qualities, window_size);
+    m_window_quality = get_window_quality(qualities, args->window_size);
 
     m_length_score = get_length_score();
-    m_final_score = get_final_score(length_weight, mean_q_weight, window_q_weight);
+    m_final_score = get_final_score(args->length_weight, args->mean_q_weight, args->window_q_weight);
 
+    // See if the read failed any of the hard cut-offs.
     m_passed = true;
+    if (m_length < args->min_length)
+        m_passed = false;
+    else if (m_mean_quality < args->min_mean_q)
+        m_passed = false;
+    else if (m_window_quality < args->min_window_q)
+        m_passed = false;
+
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
+    // TO DO: trimming/splitting
 }
 
 

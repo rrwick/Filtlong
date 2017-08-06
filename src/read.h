@@ -22,15 +22,16 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <tuple>
 
 #include "kmers.h"
+#include "arguments.h"
 
 
 class Read
 {
 public:
-    Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, int window_size,
-         double length_weight, double mean_q_weight, double window_q_weight);
+    Read(char * name, char * seq, char * qscores, int length, Kmers * kmers, Arguments * args);
 
     void print_verbose_read_info();
 
@@ -42,6 +43,9 @@ public:
     double m_window_quality;
     double m_final_score;
     bool m_passed;
+
+    std::vector<Read *> child_reads;
+    std::vector<std::tuple<int,int> > child_read_ranges;
 
 private:
     double get_mean_quality(std::vector<double> & qualities);

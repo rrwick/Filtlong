@@ -20,6 +20,8 @@
 #include <zlib.h>
 #include <stdio.h>
 #include <vector>
+#include <limits>
+
 #include "kseq.h"
 #include "read.h"
 #include "arguments.h"
@@ -94,8 +96,7 @@ int main(int argc, char **argv)
         if (l == -3)
             std::cerr << "Error reading " << args.input_reads << "\n";
         else {
-            reads.emplace_back(seq->name.s, seq->seq.s, seq->qual.s, seq->seq.l, &kmers, args.window_size,
-                               args.length_weight, args.mean_q_weight, args.window_q_weight);
+            reads.emplace_back(seq->name.s, seq->seq.s, seq->qual.s, seq->seq.l, &kmers, &args);
             if (args.verbose)
                 reads.back().print_verbose_read_info();
         }
@@ -103,25 +104,79 @@ int main(int argc, char **argv)
     kseq_destroy(seq);
     gzclose(fp);
 
+    // If the user set thresholds using either --target_bases or --keep_percent, then we need to see which additional
+    // reads should be labelled as failed.
+    if (args.target_bases_set || args.keep_percent_set) {
 
+        // Gather up pointers to the reads. If a read has been trimmed/split, it's these child reads which we use, not
+        // the parent read.
+        std::vector<Read *> read_pointers;
+        for (auto read : reads) {
+            if (read.child_reads.size() == 0)
+                read_pointers.push_back(&read);
+            else {
+                for (auto child : read.child_reads)
+                    read_pointers.push_back(child);
+            }
+        }
 
+        // See how many bases have already been passed.
+        long long total_bases = 0;
+        long long passed_bases = 0;
+        for (auto read : read_pointers) {
+            total_bases += read->m_length;
+            if (read->m_passed)
+                passed_bases += read->m_length;
+        }
 
+        // Determine how many bases we should keep.
+        long long target_bases;
+        if (args.target_bases_set)
+            target_bases = args.target_bases;
+        else
+            target_bases = std::numeric_limits<long long>::max();
+        if (args.keep_percent_set) {
+            long long keep_target = (long long)((args.keep_percent / 100.0) * total_bases);
+            target_bases = std::min(target_bases, keep_target);
+        }
+        std::cerr << "Aiming to keep " << target_bases << " bp of reads\n";
+        if (target_bases >= total_bases) {
+            std::cerr << "Not enough reads to reach target\n";
+        }
+        else if (target_bases >= passed_bases) {
+            std::cerr << "Reads already fall below target after filtering\n";
+        }
+        else {
+            // Sort reads from best to worst.
+            std::sort(read_pointers.begin(), read_pointers.end(),
+                      [](const Read* a, const Read* b) {return a->m_final_score > b->m_final_score;});
 
-
-    // Decide which reads will be outputted:
-    //  * total up the bases in the input reads
-    //  * cull any reads wil fail to meet a threshold
-    //  * sort reads from best to worst
-    //  * if the user used --keep_percent:
-    //     * loop through reads from best to worst
-    //     * when we've exceeded the keep percent, all remaining reads are culled
-    //  * if the user used --target_bases:
-    //     * loop through reads from best to worst
-    //     * when we've exceeded the target bases, all remaining reads are culled
+            // Fail all reads after the threshold has been met.
+            long long bases_so_far = 0;
+            for (auto read : read_pointers) {
+                if (bases_so_far > target_bases)
+                    read->m_passed = false;
+                else if (read->m_passed)
+                    bases_so_far += read->m_length;
+            }
+        }
+    }
 
     // Read through input reads again, this time outputting the keepers to stdout and ignoring the failures.
     // If in verbose mode, display a table as we go.
-
+    if (!args.verbose)
+        std::cerr << "Outputting passed long reads\n";
+    fp = gzopen(args.input_reads.c_str(), "r");
+    seq = kseq_init(fp);
+    while ((l = kseq_read(seq)) >= 0) {
+        if (l == -3)
+            std::cerr << "Error reading " << args.input_reads << "\n";
+        else {
+//            seq->name.s;
+        }
+    }
+    kseq_destroy(seq);
+    gzclose(fp);
 
     return 0;
 }
