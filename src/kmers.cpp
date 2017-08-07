@@ -22,6 +22,7 @@
 #include <zlib.h>
 #include <stdio.h>
 #include "kseq.h"
+#include "misc.h"
 
 KSEQ_INIT(gzFile, gzread)
 
@@ -49,24 +50,20 @@ Kmers::~Kmers() {
 
 
 void Kmers::add_read_fastqs(std::vector<std::string> filenames) {
-    std::cerr << "\nHashing k-mers from Illumina reads\n";
+    std::cerr << "Hashing 16-mers from Illumina reads\n";
 
     int sequence_count = 0;
-    for (auto & filename : filenames) {
-        std::cerr << "  " << filename << "\n";
+    for (auto & filename : filenames)
         sequence_count += add_reference(filename, true);
-    }
-    std::cerr << "  " << sequence_count << " reads, ";
-    std::cerr << m_kmers.size() << " k-mers\n\n";
+    std::cerr << "  " << int_to_string(sequence_count) << " reads, " << int_to_string(m_kmers.size()) << " 16-mers\n\n";
 }
 
 
 void Kmers::add_assembly_fasta(std::string filename) {
-    std::cerr << "\nHashing k-mers from assembly\n";
+    std::cerr << "Hashing 16-mers from assembly\n";
     std::cerr << "  " << filename << "\n";
     int sequence_count = add_reference(filename, false);
-    std::cerr << "  " << sequence_count << " contigs, ";
-    std::cerr << m_kmers.size() << " k-mers\n\n";
+    std::cerr << "  " << sequence_count << " contigs, " << m_kmers.size() << " 16-mers\n\n";
 }
 
 
@@ -82,6 +79,9 @@ int Kmers::add_reference(std::string filename, bool require_two_kmer_copies) {
     else
         add_kmer = &Kmers::add_kmer_require_one_copy;
 
+    long long base_count = 0;
+    long long last_progress = 0;
+
     gzFile fp = gzopen(filename.c_str(), "r");
     kseq_t * seq = kseq_init(fp);
     while ((l = kseq_read(seq)) >= 0) {
@@ -94,6 +94,7 @@ int Kmers::add_reference(std::string filename, bool require_two_kmer_copies) {
             if (seq->seq.l < 16)
                 continue;
 
+            base_count += seq->seq.l;
             char * sequence = seq->seq.s;
 
             // Build the starting k-mers from the first 16 bases.
@@ -113,10 +114,17 @@ int Kmers::add_reference(std::string filename, bool require_two_kmer_copies) {
                 (this->*add_kmer)(forward_kmer);
                 (this->*add_kmer)(reverse_kmer);
             }
+
+            if (base_count - last_progress >= 483611) {  // a big prime number so progress updates don't round off
+                last_progress = base_count;
+                print_hash_progress(filename, base_count);
+            }
         }
     }
     kseq_destroy(seq);
     gzclose(fp);
+    print_hash_progress(filename, base_count);
+    std::cerr << "\n";
     return sequence_count;
 }
 

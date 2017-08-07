@@ -19,11 +19,10 @@
 #include <iostream>
 #include <math.h>
 #include <limits>
-#include <sstream>
 #include <string>
-#include <iomanip>
 
 #include "read.h"
+#include "misc.h"
 
 Read::Read(std::string name, char * seq, char * qscores, int length, Kmers * kmers, Arguments * args) {
     m_name = name;
@@ -150,17 +149,6 @@ Read::Read(std::string name, char * seq, char * qscores, int length, Kmers * kme
 Read::~Read() {
     for (auto child : m_child_reads)
         delete child;
-}
-
-
-std::string double_to_string(double a) {
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(2) << a;
-    std::string s = ss.str();
-    if (s.size() < 5)
-        return std::string(5 - s.size(), ' ') + ss.str();
-    else
-        return ss.str();
 }
 
 

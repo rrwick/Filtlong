@@ -28,6 +28,7 @@
 #include "read.h"
 #include "arguments.h"
 #include "kmers.h"
+#include "misc.h"
 
 #define PROGRAM_VERSION "0.1.0"
 
@@ -77,6 +78,8 @@ int main(int argc, char **argv)
 //    std::cerr << "verbose: " << args.verbose << std::endl;
 //    return 0;
 
+    std::cerr << "\n";
+
     // Read through references and save 16-mers. For assembly references, this will save all 16-mers in the assembly.
     // For Illumina read references, the k-mer needs to appear a few times before it's added to the set.
     Kmers kmers;
@@ -90,6 +93,7 @@ int main(int argc, char **argv)
     // Read through input long reads once, storing them as Read objects and calculating their scores.
     // While we go, make sure there are no duplicate read names. Quit with an error if so.
     long long total_bases = 0;
+    long long last_progress = 0;
     std::vector<Read*> reads;
     std::unordered_map<std::string, Read*> read_dict;
     if (!args.verbose)
@@ -113,11 +117,17 @@ int main(int argc, char **argv)
                 return 0;
             }
             read_dict[read->m_name] = read;
+
+            if (total_bases - last_progress >= 483611) {  // a big prime number so progress updates don't round off
+                last_progress = total_bases;
+                print_read_score_progress(reads.size(), total_bases);
+            }
         }
     }
     kseq_destroy(seq);
     gzclose(fp);
-    std::cerr << reads.size() << " reads (" << total_bases << " bp)\n";
+    print_read_score_progress(reads.size(), total_bases);
+    std::cerr << "\n";
 
     // Gather up reads to output. If a read has been trimmed/split, it's these child reads which we use, not the
     // parent read.
@@ -138,18 +148,19 @@ int main(int argc, char **argv)
         for (auto read : reads2)
             total_after_trim_split += read->m_length;
         if (args.trim && args.split_set)
-            std::cerr << "After trimming and splitting: ";
+            std::cerr << "  after trimming and splitting: ";
         else if (args.trim)
-            std::cerr << "After trimming: ";
+            std::cerr << "  after trimming: ";
         else
-            std::cerr << "After splitting: ";
-        std::cerr << reads2.size() << " reads (" << total_after_trim_split << " bp)\n";
+            std::cerr << "  after splitting: ";
+        std::cerr << int_to_string(reads2.size()) << " reads (" << int_to_string(total_after_trim_split) << " bp)\n";
     }
     std::cerr << "\n";
 
     // If the user set thresholds using either --target_bases or --keep_percent, then we need to see which additional
     // reads should be labelled as failed.
     if (args.target_bases_set || args.keep_percent_set) {
+        std::cerr << "Filtering long reads\n";
 
         // See how many bases have already been passed.
         long long passed_bases = 0;
@@ -168,12 +179,12 @@ int main(int argc, char **argv)
             long long keep_target = (long long)((args.keep_percent / 100.0) * total_bases);
             target_bases = std::min(target_bases, keep_target);
         }
-        std::cerr << "Aiming to keep " << target_bases << " bp of reads\n";
+        std::cerr << "  target: " << int_to_string(target_bases) << " bp\n";
         if (target_bases >= total_bases) {
-            std::cerr << "Not enough reads to reach target\n";
+            std::cerr << "  not enough reads to reach target\n";
         }
         else if (target_bases >= passed_bases) {
-            std::cerr << "Reads already fall below target after filtering\n";
+            std::cerr << "  reads already fall below target after filtering\n";
         }
         else {
             // Sort reads from best to worst.
@@ -188,14 +199,15 @@ int main(int argc, char **argv)
                 else if (read->m_passed)
                     bases_so_far += read->m_length;
             }
-            std::cerr << "Keeping " << bases_so_far << " bp\n";
+            std::cerr << "  keeping " << int_to_string(bases_so_far) << " bp\n";
         }
+        std::cerr << "\n";
     }
 
     // Read through input reads again, this time outputting the keepers to stdout and ignoring the failures.
     // If in verbose mode, display a table as we go.
     if (!args.verbose)
-        std::cerr << "\nOutputting passed long reads\n";
+        std::cerr << "Outputting passed long reads\n";
     fp = gzopen(args.input_reads.c_str(), "r");
     seq = kseq_init(fp);
     while ((l = kseq_read(seq)) >= 0) {
@@ -247,5 +259,6 @@ int main(int argc, char **argv)
     for (auto read : reads)
         delete read;
 
+    std::cerr << "\n";
     return 0;
 }
