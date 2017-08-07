@@ -10,6 +10,9 @@ bin
 .idea/
 cmake-build-debug
 
+# Pycharm
+test/__pycache__/
+
 notes
 
 gh-md-toc

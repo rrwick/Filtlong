@@ -1,0 +1,4 @@
+test_trim_1: all good (no trimming)
+test_trim_2: 20 bogus bases at the start
+test_trim_3: 30 bogus bases at the end
+test_trim_4: 12 bogus bases at the start, 15 bogus bases at the end
