@@ -53,7 +53,8 @@ void Kmers::add_read_fastqs(std::vector<std::string> filenames) {
     int sequence_count = 0;
     for (auto & filename : filenames)
         sequence_count += add_reference(filename, true);
-    std::cerr << "  " << int_to_string(sequence_count) << " reads, " << int_to_string(m_kmers.size()) << " 16-mers\n\n";
+    std::cerr << "  " << int_to_string(sequence_count) << " reads, "
+              << int_to_string(m_kmers.size()) << " 16-mers\n\n";
 }
 
 
@@ -61,7 +62,13 @@ void Kmers::add_assembly_fasta(std::string filename) {
     std::cerr << "Hashing 16-mers from assembly\n";
     std::cerr << "  " << filename << "\n";
     int sequence_count = add_reference(filename, false);
-    std::cerr << "  " << sequence_count << " contigs, " << m_kmers.size() << " 16-mers\n\n";
+    std::string noun;
+    if (sequence_count == 1)
+        noun = "contig";
+    else
+        noun = "contigs";
+    std::cerr << "  " << int_to_string(sequence_count) << " " << noun << ", "
+              << int_to_string(m_kmers.size()) << " 16-mers\n\n";
 }
 
 
