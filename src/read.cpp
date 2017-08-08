@@ -42,12 +42,10 @@ Read::Read(std::string name, char * seq, char * qscores, int length, Kmers * kme
     // is in any present 16-mer, 0 if it is not.
     else {
         qualities.resize(length, 0.0);
-        uint32_t kmer;
         if (length >= 16) {
+            uint32_t kmer = kmers->starting_kmer_to_bits_forward(seq);
             for (int i = 15; i < length; ++i) {
-                if (i == 15)
-                    kmer = kmers->starting_kmer_to_bits_forward(seq);
-                else {
+                if (i > 15) {
                     kmer <<= 2;
                     kmer |= kmers->base_to_bits_forward(seq[i]);
                 }
