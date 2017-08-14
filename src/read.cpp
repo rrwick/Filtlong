@@ -131,7 +131,9 @@ Read::Read(std::string name, char * seq, char * qscores, int length, Kmers * kme
                 for (size_t i = 0; i < m_child_read_ranges.size(); ++i) {
                     int child_start = m_child_read_ranges[i].first;
                     int child_length = m_child_read_ranges[i].second - child_start;
-                    std::string child_name = m_name + "_part_" + std::to_string(i+1);
+                    int child_end = child_start + child_length;
+                    std::string child_name = m_name + "_" +
+                            std::to_string(child_start+1) + "-" + std::to_string(child_end);
                     Read * child = new Read(child_name, seq + child_start, qscores + child_start, child_length,
                                             kmers, args);
                     m_child_reads.push_back(child);

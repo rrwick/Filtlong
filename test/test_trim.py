@@ -96,8 +96,19 @@ class TestTrim(unittest.TestCase):
         console_out = self.run_command('longqc -a ASSEMBLY --trim INPUT > OUTPUT.fastq')
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 4)
-
         self.check_one_read(trimmed_reads[0], 1300, b'GCCCTGGC', b'GGGTCCAG')
         self.check_one_read(trimmed_reads[1], 701 - 20, b'GATTTATA', b'ATGGCGAC')
         self.check_one_read(trimmed_reads[2], 1000 - 30, b'CTTGAACA', b'TCCTCCAG')
         self.check_one_read(trimmed_reads[3], 1900 - 27, b'CCTTTCTT', b'TGATCACC')
+
+    def test_trim_names(self):
+        """
+        Makes sure the trimmed reads are correctly named.
+        """
+        console_out = self.run_command('longqc -a ASSEMBLY --trim INPUT > OUTPUT.fastq')
+        trimmed_reads = load_fastq(self.output_file)
+        self.assertEqual(len(trimmed_reads), 4)
+        self.assertEqual(trimmed_reads[0][0], b'test_trim_1')
+        self.assertEqual(trimmed_reads[1][0], b'test_trim_2_21-701')
+        self.assertEqual(trimmed_reads[2][0], b'test_trim_3_1-970')
+        self.assertEqual(trimmed_reads[3][0], b'test_trim_4_13-1885')

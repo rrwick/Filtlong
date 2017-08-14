@@ -234,7 +234,7 @@ int main(int argc, char **argv)
                         int end = child_read_range.second;
                         int length = end - start;
                         if (length > 0) {
-                            std::cout << "@" << seq->name.s << "_part_" << (i+1);
+                            std::cout << "@" << child_read->m_name;
                             if (seq->comment.l > 0)
                                 std::cout << " " << seq->comment.s;
                             std::cout << "\n";
