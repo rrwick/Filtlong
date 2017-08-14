@@ -67,6 +67,12 @@ class TestTrim(unittest.TestCase):
         if os.path.isfile(self.output_file):
             os.remove(self.output_file)
 
+    def check_one_read(self, read, length, start_seq, end_seq):
+        self.assertEqual(len(read[1]), length)
+        self.assertEqual(len(read[2]), length)
+        self.assertTrue(read[1].startswith(start_seq))
+        self.assertTrue(read[1].endswith(end_seq))
+
     def test_trim_1(self):
         """
         Tests read trimming console output using an assembly reference.
@@ -91,22 +97,7 @@ class TestTrim(unittest.TestCase):
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 4)
 
-        self.assertEqual(len(trimmed_reads[0][1]), 1300)
-        self.assertEqual(len(trimmed_reads[0][2]), 1300)
-        self.assertTrue(trimmed_reads[0][1].startswith(b'GCCCTGGC'))
-        self.assertTrue(trimmed_reads[0][1].endswith(b'GGGTCCAG'))
-
-        self.assertEqual(len(trimmed_reads[1][1]), 701 - 20)
-        self.assertEqual(len(trimmed_reads[1][2]), 701 - 20)
-        self.assertTrue(trimmed_reads[1][1].startswith(b'GATTTATA'))
-        self.assertTrue(trimmed_reads[1][1].endswith(b'ATGGCGAC'))
-
-        self.assertEqual(len(trimmed_reads[2][1]), 1000 - 30)
-        self.assertEqual(len(trimmed_reads[2][2]), 1000 - 30)
-        self.assertTrue(trimmed_reads[2][1].startswith(b'CTTGAACA'))
-        self.assertTrue(trimmed_reads[2][1].endswith(b'TCCTCCAG'))
-
-        self.assertEqual(len(trimmed_reads[3][1]), 1900 - 27)
-        self.assertEqual(len(trimmed_reads[3][2]), 1900 - 27)
-        self.assertTrue(trimmed_reads[3][1].startswith(b'CCTTTCTT'))
-        self.assertTrue(trimmed_reads[3][1].endswith(b'TGATCACC'))
+        self.check_one_read(trimmed_reads[0], 1300, b'GCCCTGGC', b'GGGTCCAG')
+        self.check_one_read(trimmed_reads[1], 701 - 20, b'GATTTATA', b'ATGGCGAC')
+        self.check_one_read(trimmed_reads[2], 1000 - 30, b'CTTGAACA', b'TCCTCCAG')
+        self.check_one_read(trimmed_reads[3], 1900 - 27, b'CCTTTCTT', b'TGATCACC')
