@@ -1,0 +1,355 @@
+"""
+Copyright 2017 Ryan Wick (rrwick@gmail.com)
+https://github.com/rrwick/LongQC
+
+This module contains some tests for LongQC. To run them, execute `python3 -m unittest` from the
+root LongQC directory.
+
+This file is part of LongQC. LongQC is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by the Free Software Foundation,
+either version 3 of the License, or (at your option) any later version. LongQC is distributed in
+the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+details. You should have received a copy of the GNU General Public License along with LongQC. If
+not, see <http://www.gnu.org/licenses/>.
+"""
+
+import unittest
+import os
+import subprocess
+
+
+def load_fastq(filename):
+    reads = []
+    with open(filename, 'rb') as fastq:
+        for line in fastq:
+            stripped_line = line.strip()
+            if len(stripped_line) == 0:
+                continue
+            if not stripped_line.startswith(b'@'):
+                continue
+            name = stripped_line[1:].split()[0]
+            sequence = next(fastq).strip()
+            _ = next(fastq)
+            qualities = next(fastq).strip()
+            reads.append((name, sequence, qualities))
+    return reads
+
+
+class TestSplit(unittest.TestCase):
+    """
+    These tests verify the read trimming functionality.
+    """
+    def run_command(self, command):
+        binary_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bin', 'longqc')
+        input_path = os.path.join(os.path.dirname(__file__), 'test_split.fastq')
+        assembly_reference = os.path.join(os.path.dirname(__file__), 'test_reference.fasta')
+        illumina_reference_1 = os.path.join(os.path.dirname(__file__), 'test_reference_1.fastq.gz')
+        illumina_reference_2 = os.path.join(os.path.dirname(__file__), 'test_reference_2.fastq.gz')
+
+        command = command.replace('longqc', binary_path)
+        command = command.replace('INPUT', input_path)
+        command = command.replace('ASSEMBLY', assembly_reference)
+        command = command.replace('ILLUMINA_1', illumina_reference_1)
+        command = command.replace('ILLUMINA_2', illumina_reference_2)
+
+        output_name = 'TEMP_' + str(os.getpid())
+        command = command.replace('OUTPUT', output_name)
+        try:
+            self.output_file = [x for x in command.split() if output_name in x][0]
+        except IndexError:
+            self.output_file = ''
+        p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        _, err = p.communicate()
+        return err.decode()
+
+    def tearDown(self):
+        if os.path.isfile(self.output_file):
+            os.remove(self.output_file)
+
+    def test_split_1(self):
+        """
+        When splitting is off, the reads aren't split.
+        """
+        console_out = self.run_command('longqc -a ASSEMBLY INPUT > OUTPUT.fastq')
+        self.assertTrue('4 reads (11,600 bp)' in console_out)
+        self.assertTrue('after splitting' not in console_out)
+        trimmed_reads = load_fastq(self.output_file)
+        self.assertEqual(len(trimmed_reads), 4)
+
+    def test_split_2(self):
+        """
+        When the split threshold is over 200, no reads are split.
+        """
+        console_out = self.run_command('longqc -a ASSEMBLY --split 250 INPUT > OUTPUT.fastq')
+        self.assertTrue('after splitting: 4 reads (11,600 bp)' in console_out)
+        trimmed_reads = load_fastq(self.output_file)
+        self.assertEqual(len(trimmed_reads), 4)
+        for i in range(0, 4):
+            self.assertEqual(len(trimmed_reads[i][1]), 2900)
+            self.assertEqual(len(trimmed_reads[i][2]), 2900)
+            self.assertTrue(trimmed_reads[i][1].startswith(b'TCATTACG'))
+            self.assertTrue(trimmed_reads[i][1].endswith(b'AAAAGGAC'))
+
+    def test_split_3(self):
+        """
+        When the split threshold is over 200, no reads are split.
+        """
+        console_out = self.run_command('longqc -a ASSEMBLY --split 201 INPUT > OUTPUT.fastq')
+        self.assertTrue('after splitting: 4 reads (11,600 bp)' in console_out)
+        trimmed_reads = load_fastq(self.output_file)
+        self.assertEqual(len(trimmed_reads), 4)
+        for i in range(0, 4):
+            self.assertEqual(len(trimmed_reads[i][1]), 2900)
+            self.assertEqual(len(trimmed_reads[i][2]), 2900)
+            self.assertTrue(trimmed_reads[i][1].startswith(b'TCATTACG'))
+            self.assertTrue(trimmed_reads[i][1].endswith(b'AAAAGGAC'))
+
+    def test_split_4(self):
+        """
+        When the split threshold is exactly 200, only the last read is split.
+        """
+        console_out = self.run_command('longqc -a ASSEMBLY --split 200 INPUT > OUTPUT.fastq')
+        self.assertTrue('after splitting: 5 reads (11,400 bp)' in console_out)
+        trimmed_reads = load_fastq(self.output_file)
+        self.assertEqual(len(trimmed_reads), 5)
+        for i in range(0, 3):
+            self.assertEqual(len(trimmed_reads[i][1]), 2900)
+            self.assertEqual(len(trimmed_reads[i][2]), 2900)
+            self.assertTrue(trimmed_reads[i][1].startswith(b'TCATTACG'))
+            self.assertTrue(trimmed_reads[i][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[3][1]), 1000)
+        self.assertEqual(len(trimmed_reads[3][2]), 1000)
+        self.assertTrue(trimmed_reads[3][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[3][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[4][1]), 1700)
+        self.assertEqual(len(trimmed_reads[4][2]), 1700)
+        self.assertTrue(trimmed_reads[4][1].startswith(b'CCATGACA'))
+        self.assertTrue(trimmed_reads[4][1].endswith(b'AAAAGGAC'))
+        # TO DO: check last two reads
+
+    def test_split_5(self):
+        """
+        When the split threshold is between 150 and 200, only the last read is split.
+        """
+        console_out = self.run_command('longqc -a ASSEMBLY --split 175 INPUT > OUTPUT.fastq')
+        self.assertTrue('after splitting: 5 reads (11,400 bp)' in console_out)
+        trimmed_reads = load_fastq(self.output_file)
+        self.assertEqual(len(trimmed_reads), 5)
+        for i in range(0, 3):
+            self.assertEqual(len(trimmed_reads[i][1]), 2900)
+            self.assertEqual(len(trimmed_reads[i][2]), 2900)
+            self.assertTrue(trimmed_reads[i][1].startswith(b'TCATTACG'))
+            self.assertTrue(trimmed_reads[i][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[3][1]), 1000)
+        self.assertEqual(len(trimmed_reads[3][2]), 1000)
+        self.assertTrue(trimmed_reads[3][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[3][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[4][1]), 1700)
+        self.assertEqual(len(trimmed_reads[4][2]), 1700)
+        self.assertTrue(trimmed_reads[4][1].startswith(b'CCATGACA'))
+        self.assertTrue(trimmed_reads[4][1].endswith(b'AAAAGGAC'))
+
+    def test_split_6(self):
+        """
+        When the split threshold is between 50 and 100, tbe last two reads are split.
+        """
+        console_out = self.run_command('longqc -a ASSEMBLY --split 75 INPUT > OUTPUT.fastq')
+        self.assertTrue('after splitting: 6 reads (11,300 bp)' in console_out)
+        trimmed_reads = load_fastq(self.output_file)
+        self.assertEqual(len(trimmed_reads), 6)
+        for i in range(0, 2):
+            self.assertEqual(len(trimmed_reads[i][1]), 2900)
+            self.assertEqual(len(trimmed_reads[i][2]), 2900)
+            self.assertTrue(trimmed_reads[i][1].startswith(b'TCATTACG'))
+            self.assertTrue(trimmed_reads[i][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[2][1]), 1000)
+        self.assertEqual(len(trimmed_reads[2][2]), 1000)
+        self.assertTrue(trimmed_reads[2][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[2][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[3][1]), 1800)
+        self.assertEqual(len(trimmed_reads[3][2]), 1800)
+        self.assertTrue(trimmed_reads[3][1].startswith(b'GAAACGTG'))
+        self.assertTrue(trimmed_reads[3][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[4][1]), 1000)
+        self.assertEqual(len(trimmed_reads[4][2]), 1000)
+        self.assertTrue(trimmed_reads[4][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[4][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[5][1]), 1700)
+        self.assertEqual(len(trimmed_reads[5][2]), 1700)
+        self.assertTrue(trimmed_reads[5][1].startswith(b'CCATGACA'))
+        self.assertTrue(trimmed_reads[5][1].endswith(b'AAAAGGAC'))
+
+    def test_split_7(self):
+        """
+        When the split threshold is between 50 and 100, tbe last two reads are split.
+        """
+        console_out = self.run_command('longqc -a ASSEMBLY --split 51 INPUT > OUTPUT.fastq')
+        self.assertTrue('after splitting: 6 reads (11,300 bp)' in console_out)
+        trimmed_reads = load_fastq(self.output_file)
+        self.assertEqual(len(trimmed_reads), 6)
+        for i in range(0, 2):
+            self.assertEqual(len(trimmed_reads[i][1]), 2900)
+            self.assertEqual(len(trimmed_reads[i][2]), 2900)
+            self.assertTrue(trimmed_reads[i][1].startswith(b'TCATTACG'))
+            self.assertTrue(trimmed_reads[i][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[2][1]), 1000)
+        self.assertEqual(len(trimmed_reads[2][2]), 1000)
+        self.assertTrue(trimmed_reads[2][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[2][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[3][1]), 1800)
+        self.assertEqual(len(trimmed_reads[3][2]), 1800)
+        self.assertTrue(trimmed_reads[3][1].startswith(b'GAAACGTG'))
+        self.assertTrue(trimmed_reads[3][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[4][1]), 1000)
+        self.assertEqual(len(trimmed_reads[4][2]), 1000)
+        self.assertTrue(trimmed_reads[4][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[4][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[5][1]), 1700)
+        self.assertEqual(len(trimmed_reads[5][2]), 1700)
+        self.assertTrue(trimmed_reads[5][1].startswith(b'CCATGACA'))
+        self.assertTrue(trimmed_reads[5][1].endswith(b'AAAAGGAC'))
+
+    def test_split_8(self):
+        """
+        When the split threshold is exactly 50, tbe last three reads are split.
+        """
+        console_out = self.run_command('longqc -a ASSEMBLY --split 50 INPUT > OUTPUT.fastq')
+        self.assertTrue('after splitting: 7 reads (11,250 bp)' in console_out)
+        trimmed_reads = load_fastq(self.output_file)
+        self.assertEqual(len(trimmed_reads), 7)
+
+        self.assertEqual(len(trimmed_reads[0][1]), 2900)
+        self.assertEqual(len(trimmed_reads[0][2]), 2900)
+        self.assertTrue(trimmed_reads[0][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[0][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[1][1]), 1000)
+        self.assertEqual(len(trimmed_reads[1][2]), 1000)
+        self.assertTrue(trimmed_reads[1][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[1][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[2][1]), 1850)
+        self.assertEqual(len(trimmed_reads[2][2]), 1850)
+        self.assertTrue(trimmed_reads[2][1].startswith(b'TGATGAAT'))
+        self.assertTrue(trimmed_reads[2][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[3][1]), 1000)
+        self.assertEqual(len(trimmed_reads[3][2]), 1000)
+        self.assertTrue(trimmed_reads[3][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[3][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[4][1]), 1800)
+        self.assertEqual(len(trimmed_reads[4][2]), 1800)
+        self.assertTrue(trimmed_reads[4][1].startswith(b'GAAACGTG'))
+        self.assertTrue(trimmed_reads[4][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[5][1]), 1000)
+        self.assertEqual(len(trimmed_reads[5][2]), 1000)
+        self.assertTrue(trimmed_reads[5][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[5][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[6][1]), 1700)
+        self.assertEqual(len(trimmed_reads[6][2]), 1700)
+        self.assertTrue(trimmed_reads[6][1].startswith(b'CCATGACA'))
+        self.assertTrue(trimmed_reads[6][1].endswith(b'AAAAGGAC'))
+
+    def test_split_9(self):
+        """
+        When the split threshold is less than 50, tbe last three reads are split.
+        """
+        console_out = self.run_command('longqc -a ASSEMBLY --split 25 INPUT > OUTPUT.fastq')
+        self.assertTrue('after splitting: 7 reads (11,250 bp)' in console_out)
+        trimmed_reads = load_fastq(self.output_file)
+        self.assertEqual(len(trimmed_reads), 7)
+
+        self.assertEqual(len(trimmed_reads[0][1]), 2900)
+        self.assertEqual(len(trimmed_reads[0][2]), 2900)
+        self.assertTrue(trimmed_reads[0][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[0][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[1][1]), 1000)
+        self.assertEqual(len(trimmed_reads[1][2]), 1000)
+        self.assertTrue(trimmed_reads[1][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[1][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[2][1]), 1850)
+        self.assertEqual(len(trimmed_reads[2][2]), 1850)
+        self.assertTrue(trimmed_reads[2][1].startswith(b'TGATGAAT'))
+        self.assertTrue(trimmed_reads[2][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[3][1]), 1000)
+        self.assertEqual(len(trimmed_reads[3][2]), 1000)
+        self.assertTrue(trimmed_reads[3][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[3][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[4][1]), 1800)
+        self.assertEqual(len(trimmed_reads[4][2]), 1800)
+        self.assertTrue(trimmed_reads[4][1].startswith(b'GAAACGTG'))
+        self.assertTrue(trimmed_reads[4][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[5][1]), 1000)
+        self.assertEqual(len(trimmed_reads[5][2]), 1000)
+        self.assertTrue(trimmed_reads[5][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[5][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[6][1]), 1700)
+        self.assertEqual(len(trimmed_reads[6][2]), 1700)
+        self.assertTrue(trimmed_reads[6][1].startswith(b'CCATGACA'))
+        self.assertTrue(trimmed_reads[6][1].endswith(b'AAAAGGAC'))
+
+    def test_split_10(self):
+        """
+        Same as the previous test, but using reads as a reference.
+        """
+        console_out = self.run_command('longqc -1 ILLUMINA_1 -2 ILLUMINA_2 --split 25 INPUT > OUTPUT.fastq')
+        self.assertTrue('after splitting: 7 reads (11,250 bp)' in console_out)
+        trimmed_reads = load_fastq(self.output_file)
+        self.assertEqual(len(trimmed_reads), 7)
+
+        self.assertEqual(len(trimmed_reads[0][1]), 2900)
+        self.assertEqual(len(trimmed_reads[0][2]), 2900)
+        self.assertTrue(trimmed_reads[0][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[0][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[1][1]), 1000)
+        self.assertEqual(len(trimmed_reads[1][2]), 1000)
+        self.assertTrue(trimmed_reads[1][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[1][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[2][1]), 1850)
+        self.assertEqual(len(trimmed_reads[2][2]), 1850)
+        self.assertTrue(trimmed_reads[2][1].startswith(b'TGATGAAT'))
+        self.assertTrue(trimmed_reads[2][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[3][1]), 1000)
+        self.assertEqual(len(trimmed_reads[3][2]), 1000)
+        self.assertTrue(trimmed_reads[3][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[3][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[4][1]), 1800)
+        self.assertEqual(len(trimmed_reads[4][2]), 1800)
+        self.assertTrue(trimmed_reads[4][1].startswith(b'GAAACGTG'))
+        self.assertTrue(trimmed_reads[4][1].endswith(b'AAAAGGAC'))
+
+        self.assertEqual(len(trimmed_reads[5][1]), 1000)
+        self.assertEqual(len(trimmed_reads[5][2]), 1000)
+        self.assertTrue(trimmed_reads[5][1].startswith(b'TCATTACG'))
+        self.assertTrue(trimmed_reads[5][1].endswith(b'ATTGGTTG'))
+
+        self.assertEqual(len(trimmed_reads[6][1]), 1700)
+        self.assertEqual(len(trimmed_reads[6][2]), 1700)
+        self.assertTrue(trimmed_reads[6][1].startswith(b'CCATGACA'))
+        self.assertTrue(trimmed_reads[6][1].endswith(b'AAAAGGAC'))

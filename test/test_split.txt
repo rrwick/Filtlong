@@ -1,0 +1,4 @@
+test_split_1: all good (2900 good bases)
+test_split_2: 1000 good bases, then 50 bad bases, then 1850 good bases
+test_split_3: 1000 good bases, then 100 bad bases, then 1800 good bases
+test_split_4: 1000 good bases, then 200 bad bases, then 1700 good bases
