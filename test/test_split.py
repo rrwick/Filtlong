@@ -67,6 +67,12 @@ class TestSplit(unittest.TestCase):
         if os.path.isfile(self.output_file):
             os.remove(self.output_file)
 
+    def check_one_read(self, read, length, start_seq, end_seq):
+        self.assertEqual(len(read[1]), length)
+        self.assertEqual(len(read[2]), length)
+        self.assertTrue(read[1].startswith(start_seq))
+        self.assertTrue(read[1].endswith(end_seq))
+
     def test_split_1(self):
         """
         When splitting is off, the reads aren't split.
@@ -86,10 +92,7 @@ class TestSplit(unittest.TestCase):
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 4)
         for i in range(0, 4):
-            self.assertEqual(len(trimmed_reads[i][1]), 2900)
-            self.assertEqual(len(trimmed_reads[i][2]), 2900)
-            self.assertTrue(trimmed_reads[i][1].startswith(b'TCATTACG'))
-            self.assertTrue(trimmed_reads[i][1].endswith(b'AAAAGGAC'))
+            self.check_one_read(trimmed_reads[i], 2900, b'TCATTACG', b'AAAAGGAC')
 
     def test_split_3(self):
         """
@@ -100,10 +103,7 @@ class TestSplit(unittest.TestCase):
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 4)
         for i in range(0, 4):
-            self.assertEqual(len(trimmed_reads[i][1]), 2900)
-            self.assertEqual(len(trimmed_reads[i][2]), 2900)
-            self.assertTrue(trimmed_reads[i][1].startswith(b'TCATTACG'))
-            self.assertTrue(trimmed_reads[i][1].endswith(b'AAAAGGAC'))
+            self.check_one_read(trimmed_reads[i], 2900, b'TCATTACG', b'AAAAGGAC')
 
     def test_split_4(self):
         """
@@ -114,21 +114,9 @@ class TestSplit(unittest.TestCase):
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 5)
         for i in range(0, 3):
-            self.assertEqual(len(trimmed_reads[i][1]), 2900)
-            self.assertEqual(len(trimmed_reads[i][2]), 2900)
-            self.assertTrue(trimmed_reads[i][1].startswith(b'TCATTACG'))
-            self.assertTrue(trimmed_reads[i][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[3][1]), 1000)
-        self.assertEqual(len(trimmed_reads[3][2]), 1000)
-        self.assertTrue(trimmed_reads[3][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[3][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[4][1]), 1700)
-        self.assertEqual(len(trimmed_reads[4][2]), 1700)
-        self.assertTrue(trimmed_reads[4][1].startswith(b'CCATGACA'))
-        self.assertTrue(trimmed_reads[4][1].endswith(b'AAAAGGAC'))
-        # TO DO: check last two reads
+            self.check_one_read(trimmed_reads[i], 2900, b'TCATTACG', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[3], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[4], 1700, b'CCATGACA', b'AAAAGGAC')
 
     def test_split_5(self):
         """
@@ -139,20 +127,9 @@ class TestSplit(unittest.TestCase):
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 5)
         for i in range(0, 3):
-            self.assertEqual(len(trimmed_reads[i][1]), 2900)
-            self.assertEqual(len(trimmed_reads[i][2]), 2900)
-            self.assertTrue(trimmed_reads[i][1].startswith(b'TCATTACG'))
-            self.assertTrue(trimmed_reads[i][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[3][1]), 1000)
-        self.assertEqual(len(trimmed_reads[3][2]), 1000)
-        self.assertTrue(trimmed_reads[3][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[3][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[4][1]), 1700)
-        self.assertEqual(len(trimmed_reads[4][2]), 1700)
-        self.assertTrue(trimmed_reads[4][1].startswith(b'CCATGACA'))
-        self.assertTrue(trimmed_reads[4][1].endswith(b'AAAAGGAC'))
+            self.check_one_read(trimmed_reads[i], 2900, b'TCATTACG', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[3], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[4], 1700, b'CCATGACA', b'AAAAGGAC')
 
     def test_split_6(self):
         """
@@ -163,30 +140,11 @@ class TestSplit(unittest.TestCase):
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 6)
         for i in range(0, 2):
-            self.assertEqual(len(trimmed_reads[i][1]), 2900)
-            self.assertEqual(len(trimmed_reads[i][2]), 2900)
-            self.assertTrue(trimmed_reads[i][1].startswith(b'TCATTACG'))
-            self.assertTrue(trimmed_reads[i][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[2][1]), 1000)
-        self.assertEqual(len(trimmed_reads[2][2]), 1000)
-        self.assertTrue(trimmed_reads[2][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[2][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[3][1]), 1800)
-        self.assertEqual(len(trimmed_reads[3][2]), 1800)
-        self.assertTrue(trimmed_reads[3][1].startswith(b'GAAACGTG'))
-        self.assertTrue(trimmed_reads[3][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[4][1]), 1000)
-        self.assertEqual(len(trimmed_reads[4][2]), 1000)
-        self.assertTrue(trimmed_reads[4][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[4][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[5][1]), 1700)
-        self.assertEqual(len(trimmed_reads[5][2]), 1700)
-        self.assertTrue(trimmed_reads[5][1].startswith(b'CCATGACA'))
-        self.assertTrue(trimmed_reads[5][1].endswith(b'AAAAGGAC'))
+            self.check_one_read(trimmed_reads[i], 2900, b'TCATTACG', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[2], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[3], 1800, b'GAAACGTG', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[4], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[5], 1700, b'CCATGACA', b'AAAAGGAC')
 
     def test_split_7(self):
         """
@@ -197,30 +155,11 @@ class TestSplit(unittest.TestCase):
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 6)
         for i in range(0, 2):
-            self.assertEqual(len(trimmed_reads[i][1]), 2900)
-            self.assertEqual(len(trimmed_reads[i][2]), 2900)
-            self.assertTrue(trimmed_reads[i][1].startswith(b'TCATTACG'))
-            self.assertTrue(trimmed_reads[i][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[2][1]), 1000)
-        self.assertEqual(len(trimmed_reads[2][2]), 1000)
-        self.assertTrue(trimmed_reads[2][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[2][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[3][1]), 1800)
-        self.assertEqual(len(trimmed_reads[3][2]), 1800)
-        self.assertTrue(trimmed_reads[3][1].startswith(b'GAAACGTG'))
-        self.assertTrue(trimmed_reads[3][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[4][1]), 1000)
-        self.assertEqual(len(trimmed_reads[4][2]), 1000)
-        self.assertTrue(trimmed_reads[4][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[4][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[5][1]), 1700)
-        self.assertEqual(len(trimmed_reads[5][2]), 1700)
-        self.assertTrue(trimmed_reads[5][1].startswith(b'CCATGACA'))
-        self.assertTrue(trimmed_reads[5][1].endswith(b'AAAAGGAC'))
+            self.check_one_read(trimmed_reads[i], 2900, b'TCATTACG', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[2], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[3], 1800, b'GAAACGTG', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[4], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[5], 1700, b'CCATGACA', b'AAAAGGAC')
 
     def test_split_8(self):
         """
@@ -230,41 +169,13 @@ class TestSplit(unittest.TestCase):
         self.assertTrue('after splitting: 7 reads (11,250 bp)' in console_out)
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 7)
-
-        self.assertEqual(len(trimmed_reads[0][1]), 2900)
-        self.assertEqual(len(trimmed_reads[0][2]), 2900)
-        self.assertTrue(trimmed_reads[0][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[0][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[1][1]), 1000)
-        self.assertEqual(len(trimmed_reads[1][2]), 1000)
-        self.assertTrue(trimmed_reads[1][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[1][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[2][1]), 1850)
-        self.assertEqual(len(trimmed_reads[2][2]), 1850)
-        self.assertTrue(trimmed_reads[2][1].startswith(b'TGATGAAT'))
-        self.assertTrue(trimmed_reads[2][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[3][1]), 1000)
-        self.assertEqual(len(trimmed_reads[3][2]), 1000)
-        self.assertTrue(trimmed_reads[3][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[3][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[4][1]), 1800)
-        self.assertEqual(len(trimmed_reads[4][2]), 1800)
-        self.assertTrue(trimmed_reads[4][1].startswith(b'GAAACGTG'))
-        self.assertTrue(trimmed_reads[4][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[5][1]), 1000)
-        self.assertEqual(len(trimmed_reads[5][2]), 1000)
-        self.assertTrue(trimmed_reads[5][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[5][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[6][1]), 1700)
-        self.assertEqual(len(trimmed_reads[6][2]), 1700)
-        self.assertTrue(trimmed_reads[6][1].startswith(b'CCATGACA'))
-        self.assertTrue(trimmed_reads[6][1].endswith(b'AAAAGGAC'))
+        self.check_one_read(trimmed_reads[0], 2900, b'TCATTACG', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[1], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[2], 1850, b'TGATGAAT', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[3], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[4], 1800, b'GAAACGTG', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[5], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[6], 1700, b'CCATGACA', b'AAAAGGAC')
 
     def test_split_9(self):
         """
@@ -274,42 +185,14 @@ class TestSplit(unittest.TestCase):
         self.assertTrue('after splitting: 7 reads (11,250 bp)' in console_out)
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 7)
-
-        self.assertEqual(len(trimmed_reads[0][1]), 2900)
-        self.assertEqual(len(trimmed_reads[0][2]), 2900)
-        self.assertTrue(trimmed_reads[0][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[0][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[1][1]), 1000)
-        self.assertEqual(len(trimmed_reads[1][2]), 1000)
-        self.assertTrue(trimmed_reads[1][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[1][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[2][1]), 1850)
-        self.assertEqual(len(trimmed_reads[2][2]), 1850)
-        self.assertTrue(trimmed_reads[2][1].startswith(b'TGATGAAT'))
-        self.assertTrue(trimmed_reads[2][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[3][1]), 1000)
-        self.assertEqual(len(trimmed_reads[3][2]), 1000)
-        self.assertTrue(trimmed_reads[3][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[3][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[4][1]), 1800)
-        self.assertEqual(len(trimmed_reads[4][2]), 1800)
-        self.assertTrue(trimmed_reads[4][1].startswith(b'GAAACGTG'))
-        self.assertTrue(trimmed_reads[4][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[5][1]), 1000)
-        self.assertEqual(len(trimmed_reads[5][2]), 1000)
-        self.assertTrue(trimmed_reads[5][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[5][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[6][1]), 1700)
-        self.assertEqual(len(trimmed_reads[6][2]), 1700)
-        self.assertTrue(trimmed_reads[6][1].startswith(b'CCATGACA'))
-        self.assertTrue(trimmed_reads[6][1].endswith(b'AAAAGGAC'))
-
+        self.check_one_read(trimmed_reads[0], 2900, b'TCATTACG', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[1], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[2], 1850, b'TGATGAAT', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[3], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[4], 1800, b'GAAACGTG', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[5], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[6], 1700, b'CCATGACA', b'AAAAGGAC')
+        
     def test_split_10(self):
         """
         Same as the previous test, but using reads as a reference.
@@ -318,38 +201,10 @@ class TestSplit(unittest.TestCase):
         self.assertTrue('after splitting: 7 reads (11,250 bp)' in console_out)
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 7)
-
-        self.assertEqual(len(trimmed_reads[0][1]), 2900)
-        self.assertEqual(len(trimmed_reads[0][2]), 2900)
-        self.assertTrue(trimmed_reads[0][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[0][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[1][1]), 1000)
-        self.assertEqual(len(trimmed_reads[1][2]), 1000)
-        self.assertTrue(trimmed_reads[1][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[1][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[2][1]), 1850)
-        self.assertEqual(len(trimmed_reads[2][2]), 1850)
-        self.assertTrue(trimmed_reads[2][1].startswith(b'TGATGAAT'))
-        self.assertTrue(trimmed_reads[2][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[3][1]), 1000)
-        self.assertEqual(len(trimmed_reads[3][2]), 1000)
-        self.assertTrue(trimmed_reads[3][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[3][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[4][1]), 1800)
-        self.assertEqual(len(trimmed_reads[4][2]), 1800)
-        self.assertTrue(trimmed_reads[4][1].startswith(b'GAAACGTG'))
-        self.assertTrue(trimmed_reads[4][1].endswith(b'AAAAGGAC'))
-
-        self.assertEqual(len(trimmed_reads[5][1]), 1000)
-        self.assertEqual(len(trimmed_reads[5][2]), 1000)
-        self.assertTrue(trimmed_reads[5][1].startswith(b'TCATTACG'))
-        self.assertTrue(trimmed_reads[5][1].endswith(b'ATTGGTTG'))
-
-        self.assertEqual(len(trimmed_reads[6][1]), 1700)
-        self.assertEqual(len(trimmed_reads[6][2]), 1700)
-        self.assertTrue(trimmed_reads[6][1].startswith(b'CCATGACA'))
-        self.assertTrue(trimmed_reads[6][1].endswith(b'AAAAGGAC'))
+        self.check_one_read(trimmed_reads[0], 2900, b'TCATTACG', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[1], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[2], 1850, b'TGATGAAT', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[3], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[4], 1800, b'GAAACGTG', b'AAAAGGAC')
+        self.check_one_read(trimmed_reads[5], 1000, b'TCATTACG', b'ATTGGTTG')
+        self.check_one_read(trimmed_reads[6], 1700, b'CCATGACA', b'AAAAGGAC')
