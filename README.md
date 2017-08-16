@@ -1,6 +1,6 @@
-# LongQC
+# Filtlong
 
-LongQC is a tool for distilling a large set of long reads to a smaller, higher quality subset. It scores reads based on their length and quality to choose which to output. If an external reference is available, it can use that to more accurately assess read quality.
+Filtlong is a tool for distilling a large set of long reads to a smaller, higher quality subset. It scores reads based on their length and quality to choose which to output. If an external reference is available, it can use that to more accurately assess read quality.
 
 
 
@@ -14,15 +14,15 @@ LongQC is a tool for distilling a large set of long reads to a smaller, higher q
 
 ## Installation
 
-LongQC should be simple to build:
+Filtlong should be simple to build:
 ```
-git clone https://github.com/rrwick/LongQC.git
-cd LongQC
+git clone https://github.com/rrwick/Filtlong.git
+cd Filtlong
 make -j
 bin/longqc -h
 ```
 
-You can then optionally copy LongQC to a directory in your path:
+You can then optionally copy Filtlong to a directory in your path:
 ```
 cp bin/longqc /usr/local/bin
 ```
@@ -30,7 +30,7 @@ cp bin/longqc /usr/local/bin
 
 ## Example command (without an external reference)
 
-When no external reference is provided, LongQC judges read quality using the Phred quality scores in the FASTQ file.
+When no external reference is provided, Filtlong judges read quality using the Phred quality scores in the FASTQ file.
 
 ```
 longqc --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fastq.gz | gzip > output.fastq.gz
@@ -46,13 +46,13 @@ If there are still more than 500 Mbp after throwing out reads under 1 kbp and th
 * `input.fastq.gz`<br>
 The input long reads to be filtered.
 * `| gzip > output.fastq.gz`
-LongQC outputs the filtered reads to stdout. I just pipe to gzip to keep the file size down.
+Filtlong outputs the filtered reads to stdout. I just pipe to gzip to keep the file size down.
 
 
 
 ## Example command (with Illumina read reference)
 
-When an external reference is provided, LongQC ignores the Phred quality scores and instead judges read quality using k-mer matches to the reference. This is a more accurate gauge of quality and enables a couple more options.
+When an external reference is provided, Filtlong ignores the Phred quality scores and instead judges read quality using k-mer matches to the reference. This is a more accurate gauge of quality and enables a couple more options.
 
 ```
 longqc -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 250 input.fastq.gz | gzip > output.fastq.gz
@@ -73,7 +73,7 @@ Split reads whenever 250 consequence bases fail to match a k-mer in the Illumina
 ```
 usage: longqc {OPTIONS} [input_reads]
 
-LongQC: a quality filtering tool for Nanopore and PacBio reads
+Filtlong: a quality filtering tool for Nanopore and PacBio reads
 
 positional arguments:
    input_reads                          Input long reads to be filtered
@@ -109,7 +109,7 @@ optional arguments:
 
    -h, --help                           display this help menu
 
-For more information, go to: https://github.com/rrwick/LongQC
+For more information, go to: https://github.com/rrwick/Filtlong
 ```
 
 
@@ -123,15 +123,16 @@ The length score is pretty simple: longer is better and [here is a graph of the 
 * __Mean quality score__<br>
 The mean quality score is calculated in two different ways, depending on whether an external reference was used.
   * If an external reference was not used, the mean quality score is the average read identity, as indicated by the Phred quality scores. For example, consider a read where all the fastq quality characters are `+`. The qscores for each base are 10 which equates to a 90% chance of being correct. This read would then have a mean quality score of 90.
-  * If an external reference was used, then LongQC tallies up the 16-mers in the reference. Read bases are then scored as either 100 (contained in a 16-mer from the reference) or 0 (not contained in a 16-mer from the reference). The mean read score is a mean of all these base scores.
+  * If an external reference was used, then Filtlong tallies up the 16-mers in the reference. Read bases are then scored as either 100 (contained in a 16-mer from the reference) or 0 (not contained in a 16-mer from the reference). The mean read score is a mean of all these base scores.
 
 * __Window quality score__<br>
 The window quality score is the mean quality score for the lowest scoring window in the read. Each window's quality is calcuated in the same way as the mean quality score (just for the window instead of for the whole read). The default window size is 250 but can be changed with `--window_size`.
 
 The read's final score is then a combination of those three scores:
-* First, LongQC takes the geometric weighted mean of the length score and the mean quality score. The weights are equal (both 1) by default, but you can adjust this with `--length_weight` and `--mean_q_weight` to make length or quality more or less important. By using a geometric mean instead of an arithmetic mean, the mean will be closer to the weaker of the two component scores.
+* First, Filtlong takes the geometric weighted mean of the length score and the mean quality score. The weights are equal (both 1) by default, but you can adjust this with `--length_weight` and `--mean_q_weight` to make length or quality more or less important. By using a geometric mean instead of an arithmetic mean, the mean will be closer to the weaker of the two component scores.
 * Then the score is scaled down by the ratio of the window quality score to the mean quality score.
-* Expressed mathematically, the formula for the final read score is: TO DO
+* Expressed mathematically, the formula for the final read score is:
+<p align="center"><img src="misc/score_equation.png" alt="score equation" width="400"></p>
 
 It is the read's final score which is used to determine thresholds for the `--keep_percent` and `--target_bases` options.
 
@@ -151,7 +152,7 @@ Split example: TO DO
 
 I owe many thanks to [Kat Holt](https://holtlab.net/) and [Louise Judd](https://scholar.google.com.au/citations?user=eO22mYUAAAAJ) for keeping me well supplied with Nanopore reads.
 
-LongQC makes use of some nice open source libraries:
+Filtlong makes use of some nice open source libraries:
 * [Klib](https://github.com/attractivechaos/klib/) for easy fastq parsing
 * [args](https://github.com/Taywee/args) for command-line argument parsing.
 * [C++ bloom filter library](https://github.com/ArashPartow/bloom) for some memory-saving in the k-mer counting
