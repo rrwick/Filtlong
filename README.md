@@ -1,6 +1,20 @@
-<p align="center"><img src="misc/filtlong_logo.png" alt="Filtlong" width="500"></p>
+<p align="center"><img src="misc/filtlong_logo.png" alt="Filtlong" width="450"></p>
 
-Filtlong is a tool for distilling a large set of long reads to a smaller, higher quality subset. It scores reads based on their length and quality to choose which to output. If an external reference is available, it can use that to more accurately assess read quality.
+Filtlong is a tool for filtering long reads by quality. It can take a large set of long reads and produce a smaller, higher quality subset. It uses both read length and sequence quality to choose which to output.
+
+
+
+## Table of contents
+
+* [Requirements](#requirements)
+* [Installation](#installation)
+* [Example commands](#example-commands)
+* [Full usage](#full-usage)
+* [Method](#method)
+* [Read scoring](#read-scoring)
+* [Trimming and splitting](#trimming-and-splitting)
+* [Acknowledgements](#acknowledgements)
+* [License](#license)
 
 
 
@@ -28,7 +42,9 @@ cp bin/filtlong ~/.local/bin
 ```
 
 
-## Example command (without an external reference)
+## Example commands
+
+### Without an external reference
 
 When no external reference is provided, Filtlong judges read quality using the Phred quality scores in the FASTQ file.
 
@@ -36,7 +52,6 @@ When no external reference is provided, Filtlong judges read quality using the P
 filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fastq.gz | gzip > output.fastq.gz
 ```
 
-Explanation:
 * `--min_length 1000`<br>
 Discard any read which is shorter than 1 kbp.
 * `--keep_percent 90`<br>
@@ -45,12 +60,11 @@ Throw out the worst 10% of reads.
 If there are still more than 500 Mbp after throwing out reads under 1 kbp and the worst 10%, the remove the worst reads until only 500 Mbp remain. Useful for very large read sets.
 * `input.fastq.gz`<br>
 The input long reads to be filtered.
-* `| gzip > output.fastq.gz`
-Filtlong outputs the filtered reads to stdout. I just pipe to gzip to keep the file size down.
+* `| gzip > output.fastq.gz`<br>
+Filtlong outputs the filtered reads to stdout. Pipe to gzip to keep the file size down.
 
 
-
-## Example command (with Illumina read reference)
+### With Illumina read reference
 
 When an external reference is provided, Filtlong ignores the Phred quality scores and instead judges read quality using k-mer matches to the reference. This is a more accurate gauge of quality and enables a couple more options.
 
@@ -58,9 +72,8 @@ When an external reference is provided, Filtlong ignores the Phred quality score
 filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 250 input.fastq.gz | gzip > output.fastq.gz
 ```
 
-Explanation:
 * `-1 illumina_1.fastq.gz -2 illumina_2.fastq.gz`<br>
-Illumina reads as an external reference. You can instead use `-a` to provide an assembly as a reference (but Illumina reads are preferable if they are available).
+Illumina reads as an external reference. You can instead use `-a` to provide an assembly as a reference, but Illumina reads are preferable if they are available.
 * `--trim`<br>
 Trim low-quality bases from the start and end. In this context 'low-quality' means bases which do not match a k-mer in the Illumina reads. This ensures the each read starts and ends with solid sequence.
 * `--split 250`<br>
@@ -125,7 +138,7 @@ When run, Filtlong carries out the following steps:
   * If a read fails to meet any of the hard thresholds (`--min_length`, `--min_mean_q` or `--min_window_q`) then it is marked as 'fail' now.
   * If `--trim` or `--split` was used, then 'child' reads are made here (see [Trimming and splitting](#trimming-and-splitting) for more information). Each child read is scored using the same read scoring logic.
   * If `--verbose` was used, display detailed information about the read scoring.
-3. Gather up all potentially outputable reads. If neither `--trim` nor `--split` was used, this is simply the original set of reads. If `--trim` or `--split` was used, then the child reads replace the original reads.
+3. Gather up all reads eligible for output. If neither `--trim` nor `--split` was used, this is simply the original set of reads. If `--trim` or `--split` was used, then the child reads replace the original reads.
 4. If `--target_bases` and/or `--keep_percent` was used, sort the reads by quality and set an appropriate score threshold. Reads which fall below the threshold are marked as 'fail'.
   * If both `--target_bases` and `--keep_percent` are used, then the threshold is set to the more stringent of the two.
 5. Output all reads which are not marked as 'fail' to stdout.
@@ -145,7 +158,7 @@ The mean quality score is calculated in two different ways, depending on whether
   * If an external reference was used, then Filtlong tallies up the 16-mers in the reference. Read bases are then scored as either 100 (contained in a 16-mer from the reference) or 0 (not contained in a 16-mer from the reference). The mean read score is a mean of all these base scores.
 
 * __Window quality score__<br>
-The window quality score is the mean quality score for the lowest scoring window in the read. Each window's quality is calcuated in the same way as the mean quality score (just for the window instead of for the whole read). The default window size is 250 but can be changed with `--window_size`.
+The window quality score is the mean quality score for the lowest scoring window in the read. Each window's quality is calculated in the same way as the mean quality score (just for the window instead of for the whole read). The default window size is 250 but can be changed with `--window_size`.
 
 The read's final score is then a combination of those three scores:
 * First, Filtlong takes the geometric weighted mean of the length score and the mean quality score. The weights are equal (both 1) by default, but you can adjust this with `--length_weight` and `--mean_q_weight` to make length or quality more or less important. By using a geometric mean instead of an arithmetic mean, the mean will be closer to the weaker of the two component scores.
@@ -159,15 +172,35 @@ It is the read's final score which is used to determine thresholds for the `--ke
 
 ## Trimming and splitting
 
-If `--trim` or `--split` are used, then each read can result in one or more 'child' reads. It is these child reads which are considered in the final analysis.
-
-Trim example: TO DO
-
-Split example: TO DO
+If `--trim` or `--split` are used, then each read can result in one or more 'child' reads. It is these child reads which are considered in the final analysis. These options can only be used with an external reference (i.e. Filtlong will not trim or split based on Phred quality scores).
 
 
+### Trim example
 
-# Acknowledgements
+Consider the following example read. Bases which match a 16-mer to the reference are bold:
+<p align="center"><img src="misc/trim_example_1.png" alt="Trim example 1" width="100%"></p>
+
+If Filtlong is run with `--trim`, any non-matching bases at the start and end are removed to produce this child read:
+<p align="center"><img src="misc/trim_example_2.png" alt="Trim example 2" width="100%"></p>
+
+Only the child read (not the original read) is now eligible for outputting. Its length score will be a bit worse than the original read, but its mean quality score will be better.
+
+
+### Split example
+
+Using the same example read, if Filtlong was run with `--trim --split 20`, then in addition to trimming the ends, any run of non-matching bases 20 or longer will be removed. This results in two separate child reads:
+<p align="center"><img src="misc/split_example_1.png" alt="Split example 1" width="100%"></p>
+
+These child reads will have worse length scores than the original read but much better quality scores. Note that a split setting of 20 was used for this toy example but is very low for a real run of Filtlong – it would be quite aggressive and result in reads being split into very many pieces. A value more like 250 is more practical.
+
+This is what you'd get if you ran the example read with `--trim --split 1`:
+<p align="center"><img src="misc/split_example_2.png" alt="Split example 2" width="100%"></p>
+
+Now _any_ run of non-matching bases is removed, regardless of length. The read is split into 3 child reads, each with perfect quality. Again, such a low setting would probably not be practical for a real read set.
+
+
+
+## Acknowledgements
 
 I owe many thanks to [Kat Holt](https://holtlab.net/) and [Louise Judd](https://scholar.google.com.au/citations?user=eO22mYUAAAAJ) for keeping me well supplied with Nanopore reads.
 
@@ -180,6 +213,6 @@ Thank you to the developers of these libraries!
 
 
 
-# License
+## License
 
 [GNU General Public License, version 3](https://www.gnu.org/licenses/gpl-3.0.html)
