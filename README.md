@@ -199,6 +199,57 @@ This is what you'd get if you ran the example read with `--trim --split 1`:
 Now _any_ run of non-matching bases is removed, regardless of length. The read is split into 3 child reads, each with perfect quality. Again, such a low setting would probably not be practical for a real read set.
 
 
+### Real read example
+
+Here's a real example of Filtlong's trimming and splitting. The text shown in this example is what you'd see if you ran Filtlong with the `--verbose` option.
+
+The input read is quite long and got a very good length score. Its mean quality score is decent but the window quality is zero, indicating that the read has windows with no bases matching the reference 16-mers:
+```
+bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template
+            length = 117786     length score = 95.93
+      mean quality = 53.02    window quality =  0.00   final score = 47.54
+```
+
+The read's bad ranges are the coordinates non-matching start/end regions (because of `--trim`) or runs of 250 or more non-matching bases (because of `--split 250`). The child ranges are the inverse: bases that aren't in the bad ranges:
+```
+        bad ranges = 0-25, 71401-71745, 72393-72683, 72742-73049, 77279-77627, 78710-79055, 85575-85947, 86620-86877, 89397-89682, 91451-91782, 94415-94764, 96010-96306, 96604-96886, 98691-99176, 102349-102655, 102913-103286, 103488-103828, 106124-106397, 113277-113581, 117784-117786
+      child ranges = 25-71401, 71745-72393, 72683-72742, 73049-77279, 77627-78710, 79055-85575, 85947-86620, 86877-89397, 89682-91451, 91782-94415, 94764-96010, 96306-96604, 96886-98691, 99176-102349, 102655-102913, 103286-103488, 103828-106124, 106397-113277, 113581-117784
+```
+
+A child read is made from each child range and assessed separately. The original read is no longer eligible for output – only the child reads are. Here are the first few of them:
+```
+bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_26-71401
+            length = 71376      length score = 93.45
+      mean quality = 74.09    window quality =  6.80   final score = 58.02
+
+bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_71746-72393
+            length = 648        length score = 11.47
+      mean quality = 15.12    window quality =  6.40   final score = 10.64
+
+bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_72684-72742
+            length = 59         length score =  1.17
+      mean quality = 98.31    window quality = 98.31   final score = 10.71
+
+bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_73050-77279
+            length = 4230       length score = 45.83
+      mean quality = 25.11    window quality =  6.40   final score = 25.50
+
+bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_77628-78710
+            length = 1083       length score = 17.80
+      mean quality = 14.68    window quality =  6.40   final score = 13.13
+
+bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_79056-85575
+            length = 6520       length score = 56.60
+      mean quality = 23.27    window quality =  6.40   final score = 27.52
+
+bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_85948-86620
+            length = 673        length score = 11.86
+      mean quality = 18.28    window quality =  6.80   final score = 11.64
+```
+
+You can see the first child read is about 60% of the original read and despite being shorter, its higher quality gives it a better final score. Many of the remaining pieces are very short and have therefore earned low scores. Depending on the output thresholds (like `--min_length` and `--keep_percent`) these may fail and will be discarded.
+
+
 
 ## Acknowledgements
 
