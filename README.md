@@ -1,4 +1,4 @@
-# Filtlong
+<p align="center"><img src="misc/filtlong_logo.png" alt="Filtlong" width="500"></p>
 
 Filtlong is a tool for distilling a large set of long reads to a smaller, higher quality subset. It scores reads based on their length and quality to choose which to output. If an external reference is available, it can use that to more accurately assess read quality.
 
@@ -14,17 +14,17 @@ Filtlong is a tool for distilling a large set of long reads to a smaller, higher
 
 ## Installation
 
-Filtlong should be simple to build:
+Filtlong builds into a stand-alone executable:
 ```
 git clone https://github.com/rrwick/Filtlong.git
 cd Filtlong
 make -j
-bin/longqc -h
+bin/filtlong -h
 ```
 
-You can then optionally copy Filtlong to a directory in your path:
+You can then optionally copy Filtlong to a directory in your PATH:
 ```
-cp bin/longqc /usr/local/bin
+cp bin/filtlong ~/.local/bin
 ```
 
 
@@ -33,12 +33,12 @@ cp bin/longqc /usr/local/bin
 When no external reference is provided, Filtlong judges read quality using the Phred quality scores in the FASTQ file.
 
 ```
-longqc --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fastq.gz | gzip > output.fastq.gz
+filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fastq.gz | gzip > output.fastq.gz
 ```
 
 Explanation:
 * `--min_length 1000`<br>
-Discard any read which is shorter than 1 kbp. Since in this example we have Illumina reads, there's no need for long reads that aren't actually long.
+Discard any read which is shorter than 1 kbp.
 * `--keep_percent 90`<br>
 Throw out the worst 10% of reads.
 * `--target_bases 500000000`<br>
@@ -55,7 +55,7 @@ Filtlong outputs the filtered reads to stdout. I just pipe to gzip to keep the f
 When an external reference is provided, Filtlong ignores the Phred quality scores and instead judges read quality using k-mer matches to the reference. This is a more accurate gauge of quality and enables a couple more options.
 
 ```
-longqc -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 250 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 250 input.fastq.gz | gzip > output.fastq.gz
 ```
 
 Explanation:
@@ -71,7 +71,7 @@ Split reads whenever 250 consequence bases fail to match a k-mer in the Illumina
 ## Full usage
 
 ```
-usage: longqc {OPTIONS} [input_reads]
+usage: filtlong {OPTIONS} [input_reads]
 
 Filtlong: a quality filtering tool for Nanopore and PacBio reads
 
@@ -113,6 +113,25 @@ For more information, go to: https://github.com/rrwick/Filtlong
 ```
 
 
+## Method
+
+When run, Filtlong carries out the following steps:
+
+1. If an external reference was provided, hash all of the reference's 16-mers.
+  * If the reference is an assembly, then Filtlong simply hashes all 16-mers in the assembly.
+  * If the reference is in Illumina reads, then the 16-mer has to be encountered a few times before it's hashed (to avoid hashing 16-mers that result from read errors).
+2. Score each of the input reads.
+  * Each read gets a final scores which is a function of its length, mean quality and window quality (see [Read scoring](#read-scoring) for more information).
+  * If a read fails to meet any of the hard thresholds (`--min_length`, `--min_mean_q` or `--min_window_q`) then it is marked as 'fail' now.
+  * If `--trim` or `--split` was used, then 'child' reads are made here (see [Trimming and splitting](#trimming-and-splitting) for more information). Each child read is scored using the same read scoring logic.
+  * If `--verbose` was used, display detailed information about the read scoring.
+3. Gather up all potentially outputable reads. If neither `--trim` nor `--split` was used, this is simply the original set of reads. If `--trim` or `--split` was used, then the child reads replace the original reads.
+4. If `--target_bases` and/or `--keep_percent` was used, sort the reads by quality and set an appropriate score threshold. Reads which fall below the threshold are marked as 'fail'.
+  * If both `--target_bases` and `--keep_percent` are used, then the threshold is set to the more stringent of the two.
+5. Output all reads which are not marked as 'fail' to stdout.
+  * Reads are outputted in the same order as the input file (not in in quality-sorted order).
+
+
 ## Read scoring
 
 Reads are scored based on three separate metrics: length, mean quality and window quality:
@@ -132,7 +151,7 @@ The read's final score is then a combination of those three scores:
 * First, Filtlong takes the geometric weighted mean of the length score and the mean quality score. The weights are equal (both 1) by default, but you can adjust this with `--length_weight` and `--mean_q_weight` to make length or quality more or less important. By using a geometric mean instead of an arithmetic mean, the mean will be closer to the weaker of the two component scores.
 * Then the score is scaled down by the ratio of the window quality score to the mean quality score.
 * Expressed mathematically, the formula for the final read score is:
-<p align="center"><img src="misc/score_equation.png" alt="score equation" width="400"></p>
+<p align="center"><img src="misc/score_equation.png" alt="score equation" width="500"></p>
 
 It is the read's final score which is used to determine thresholds for the `--keep_percent` and `--target_bases` options.
 
