@@ -9,6 +9,7 @@ bin
 # CLion
 .idea/
 cmake-build-debug
+CMakeLists.txt
 
 # Pycharm
 test/__pycache__/
