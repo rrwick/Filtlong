@@ -19,7 +19,7 @@ FLAGS        = -std=c++11
 DEBUGFLAGS   = -g
 RELEASEFLAGS = -O3
 
-TARGET       = bin/longqc
+TARGET       = bin/filtlong
 SHELL        = /bin/sh
 SOURCES      = $(shell find src -name "*.cpp")
 HEADERS      = $(shell find src -name "*.h")

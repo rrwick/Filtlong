@@ -41,13 +41,13 @@ class TestSplit(unittest.TestCase):
     These tests verify the read trimming functionality.
     """
     def run_command(self, command):
-        binary_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bin', 'longqc')
+        binary_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bin', 'filtlong')
         input_path = os.path.join(os.path.dirname(__file__), 'test_split.fastq')
         assembly_reference = os.path.join(os.path.dirname(__file__), 'test_reference.fasta')
         illumina_reference_1 = os.path.join(os.path.dirname(__file__), 'test_reference_1.fastq.gz')
         illumina_reference_2 = os.path.join(os.path.dirname(__file__), 'test_reference_2.fastq.gz')
 
-        command = command.replace('longqc', binary_path)
+        command = command.replace('filtlong', binary_path)
         command = command.replace('INPUT', input_path)
         command = command.replace('ASSEMBLY', assembly_reference)
         command = command.replace('ILLUMINA_1', illumina_reference_1)
@@ -77,7 +77,7 @@ class TestSplit(unittest.TestCase):
         """
         When splitting is off, the reads aren't split.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY INPUT > OUTPUT.fastq')
         self.assertTrue('4 reads (11,600 bp)' in console_out)
         self.assertTrue('after splitting' not in console_out)
         split_reads = load_fastq(self.output_file)
@@ -87,7 +87,7 @@ class TestSplit(unittest.TestCase):
         """
         When the split threshold is over 200, no reads are split.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY --split 250 INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY --split 250 INPUT > OUTPUT.fastq')
         self.assertTrue('after splitting: 4 reads (11,600 bp)' in console_out)
         split_reads = load_fastq(self.output_file)
         self.assertEqual(len(split_reads), 4)
@@ -98,7 +98,7 @@ class TestSplit(unittest.TestCase):
         """
         When the split threshold is over 200, no reads are split.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY --split 201 INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY --split 201 INPUT > OUTPUT.fastq')
         self.assertTrue('after splitting: 4 reads (11,600 bp)' in console_out)
         split_reads = load_fastq(self.output_file)
         self.assertEqual(len(split_reads), 4)
@@ -109,7 +109,7 @@ class TestSplit(unittest.TestCase):
         """
         When the split threshold is exactly 200, only the last read is split.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY --split 200 INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY --split 200 INPUT > OUTPUT.fastq')
         self.assertTrue('after splitting: 5 reads (11,400 bp)' in console_out)
         split_reads = load_fastq(self.output_file)
         self.assertEqual(len(split_reads), 5)
@@ -122,7 +122,7 @@ class TestSplit(unittest.TestCase):
         """
         When the split threshold is between 150 and 200, only the last read is split.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY --split 175 INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY --split 175 INPUT > OUTPUT.fastq')
         self.assertTrue('after splitting: 5 reads (11,400 bp)' in console_out)
         split_reads = load_fastq(self.output_file)
         self.assertEqual(len(split_reads), 5)
@@ -135,7 +135,7 @@ class TestSplit(unittest.TestCase):
         """
         When the split threshold is between 50 and 100, tbe last two reads are split.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY --split 75 INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY --split 75 INPUT > OUTPUT.fastq')
         self.assertTrue('after splitting: 6 reads (11,300 bp)' in console_out)
         split_reads = load_fastq(self.output_file)
         self.assertEqual(len(split_reads), 6)
@@ -150,7 +150,7 @@ class TestSplit(unittest.TestCase):
         """
         When the split threshold is between 50 and 100, tbe last two reads are split.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY --split 51 INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY --split 51 INPUT > OUTPUT.fastq')
         self.assertTrue('after splitting: 6 reads (11,300 bp)' in console_out)
         split_reads = load_fastq(self.output_file)
         self.assertEqual(len(split_reads), 6)
@@ -165,7 +165,7 @@ class TestSplit(unittest.TestCase):
         """
         When the split threshold is exactly 50, tbe last three reads are split.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY --split 50 INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY --split 50 INPUT > OUTPUT.fastq')
         self.assertTrue('after splitting: 7 reads (11,250 bp)' in console_out)
         split_reads = load_fastq(self.output_file)
         self.assertEqual(len(split_reads), 7)
@@ -181,7 +181,7 @@ class TestSplit(unittest.TestCase):
         """
         When the split threshold is less than 50, tbe last three reads are split.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY --split 25 INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY --split 25 INPUT > OUTPUT.fastq')
         self.assertTrue('after splitting: 7 reads (11,250 bp)' in console_out)
         split_reads = load_fastq(self.output_file)
         self.assertEqual(len(split_reads), 7)
@@ -197,7 +197,7 @@ class TestSplit(unittest.TestCase):
         """
         Same as the previous test, but using reads as a reference.
         """
-        console_out = self.run_command('longqc -1 ILLUMINA_1 -2 ILLUMINA_2 --split 25 INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -1 ILLUMINA_1 -2 ILLUMINA_2 --split 25 INPUT > OUTPUT.fastq')
         self.assertTrue('after splitting: 7 reads (11,250 bp)' in console_out)
         split_reads = load_fastq(self.output_file)
         self.assertEqual(len(split_reads), 7)
@@ -213,7 +213,7 @@ class TestSplit(unittest.TestCase):
         """
         Makes sure the split reads are correctly named.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY --split 25 INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY --split 25 INPUT > OUTPUT.fastq')
         split_reads = load_fastq(self.output_file)
         self.assertEqual(len(split_reads), 7)
         self.assertEqual(split_reads[0][0], b'test_split_1')

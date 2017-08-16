@@ -41,13 +41,13 @@ class TestTrim(unittest.TestCase):
     These tests verify the read trimming functionality.
     """
     def run_command(self, command):
-        binary_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bin', 'longqc')
+        binary_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bin', 'filtlong')
         input_path = os.path.join(os.path.dirname(__file__), 'test_trim.fastq')
         assembly_reference = os.path.join(os.path.dirname(__file__), 'test_reference.fasta')
         illumina_reference_1 = os.path.join(os.path.dirname(__file__), 'test_reference_1.fastq.gz')
         illumina_reference_2 = os.path.join(os.path.dirname(__file__), 'test_reference_2.fastq.gz')
 
-        command = command.replace('longqc', binary_path)
+        command = command.replace('filtlong', binary_path)
         command = command.replace('INPUT', input_path)
         command = command.replace('ASSEMBLY', assembly_reference)
         command = command.replace('ILLUMINA_1', illumina_reference_1)
@@ -77,7 +77,7 @@ class TestTrim(unittest.TestCase):
         """
         Tests read trimming console output using an assembly reference.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY --trim INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY --trim INPUT > OUTPUT.fastq')
         self.assertTrue('4 reads (4,901 bp)' in console_out)
         self.assertTrue('after trimming: 4 reads (4,824 bp)' in console_out)
 
@@ -85,7 +85,7 @@ class TestTrim(unittest.TestCase):
         """
         Tests read trimming console output using Illumina read references.
         """
-        console_out = self.run_command('longqc -1 ILLUMINA_1 -2 ILLUMINA_2 --trim INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -1 ILLUMINA_1 -2 ILLUMINA_2 --trim INPUT > OUTPUT.fastq')
         self.assertTrue('4 reads (4,901 bp)' in console_out)
         self.assertTrue('after trimming: 4 reads (4,824 bp)' in console_out)
 
@@ -93,7 +93,7 @@ class TestTrim(unittest.TestCase):
         """
         Actually loads the trimmed reads to verify that they look good.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY --trim INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY --trim INPUT > OUTPUT.fastq')
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 4)
         self.check_one_read(trimmed_reads[0], 1300, b'GCCCTGGC', b'GGGTCCAG')
@@ -105,7 +105,7 @@ class TestTrim(unittest.TestCase):
         """
         Makes sure the trimmed reads are correctly named.
         """
-        console_out = self.run_command('longqc -a ASSEMBLY --trim INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong -a ASSEMBLY --trim INPUT > OUTPUT.fastq')
         trimmed_reads = load_fastq(self.output_file)
         self.assertEqual(len(trimmed_reads), 4)
         self.assertEqual(trimmed_reads[0][0], b'test_trim_1')
