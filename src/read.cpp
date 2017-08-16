@@ -171,8 +171,6 @@ void Read::print_verbose_read_info() {
 
     std::cerr << "   final score = " << double_to_string(m_final_score) << "\n";
 
-    if (m_first_base_in_kmer != -1)
-        std::cerr << "       k-mer range = " << m_first_base_in_kmer << "-" << m_last_base_in_kmer << "\n";
     if (m_bad_ranges.size() > 0) {
         std::cerr << "        bad ranges = ";
         for (size_t i = 0; i < m_bad_ranges.size(); ++i) {
