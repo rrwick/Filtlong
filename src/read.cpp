@@ -251,7 +251,7 @@ double Read::get_final_score(double length_weight, double mean_q_weight, double 
     total_weight = length_weight + mean_q_weight + window_q_weight;
     double window_weight_fraction = window_q_weight / total_weight;
     double non_window_weight_fraction = 1.0 - window_weight_fraction;
-    scaling_factor = (1.0 * non_window_weight_fraction) + (scaling_factor * window_weight_fraction);
+    scaling_factor = non_window_weight_fraction + (scaling_factor * window_weight_fraction);
     return final_score * scaling_factor;
 }
 
