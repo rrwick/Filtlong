@@ -203,9 +203,7 @@ int main(int argc, char **argv)
     }
 
     // Read through input reads again, this time outputting the keepers to stdout and ignoring the failures.
-    // If in verbose mode, display a table as we go.
-    if (!args.verbose)
-        std::cerr << "Outputting passed long reads\n";
+    std::cerr << "Outputting passed long reads\n";
     fp = gzopen(args.input_reads.c_str(), "r");
     seq = kseq_init(fp);
     while ((l = kseq_read(seq)) >= 0) {
