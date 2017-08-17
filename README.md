@@ -61,15 +61,15 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 
 ## Example commands (detailed)
 
-These examples use a 1.3 Gbp read set that's part of a [barcoded 1D MinION run](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing). I assessed read quality by aligning the reads to a completed assembly using [minimap2](https://github.com/lh3/minimap2).
+These examples use a 1.3 Gbp read set that's part of a [barcoded 1D MinION run](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing). I assessed read identity by aligning the reads to a completed assembly using [minimap2](https://github.com/lh3/minimap2) and [this script](misc/read_length_identity.py).
 
 <table>
     <tr>
         <td>
             <img align="right" src="misc/example_commands_0_unfiltered.png" alt="unfiltered" width="400">
-            Here's the read length and identity distribution before running Filtlong.
+            Here are the read length and identity distributions before running Filtlong.
             <br><br>
-            The read length N50 is 24,088 bp (i.e. half the bases are in a read 24,088 bp long or longer). The read identity N50 is 85.61% (i.e. half the bases are in a read with 85.61% identity or better).
+            The length N50 is 24,088 bp (i.e. half the bases are in a read 24,088 bp long or longer). The identity N50 is 85.61% (i.e. half the bases are in a read with 85.61% or higher identity).
         </td>
     </tr>
 </table>
@@ -99,11 +99,11 @@ Filtlong outputs the filtered reads to stdout. Pipe to gzip to keep the file siz
     <tr>
         <td>
             <img align="right" src="misc/example_commands_1_without_reference.png" alt="without_reference" width="400">
-            Filtlong has cut the original 1.3 Gbp of reads down to a much better 500 Mbp subset:
+            Filtlong has cut the original 1.3 Gbp of reads down to a much better 500 Mbp subset. Short reads and low identity reads have been largely removed.
             <br><br>
-            Read length N50 = 36,827 bp
+            Length N50 = 36,827 bp
             <br>
-            Read identity N50 = 88.53%
+            Identity N50 = 88.53%
         </td>
     </tr>
 </table>
@@ -126,9 +126,9 @@ These options allow Illumina reads to be used as an external reference. You can 
             <img align="right" src="misc/example_commands_2_with_reference.png" alt="with_reference" width="400">
             By using an external reference, Filtlong is better able to judge read quality, and now most remaining reads are 85% identity or better.
             <br><br>
-            Read length N50 = 28,713 bp
+            Length N50 = 28,713 bp
             <br>
-            Read identity N50 = 88.94%
+            Identity N50 = 88.94%
         </td>
     </tr>
 </table>
@@ -152,9 +152,9 @@ Split reads whenever 250 consequence bases fail to match a k-mer in the Illumina
             <img align="right" src="misc/example_commands_3_trim_split.png" alt="trim_split" width="400">
             Trimming and splitting has further improved the read identity. This is especially apparent at the short side of the length distribution where more reads now exceed 92% identity.
             <br><br>
-            Read length N50 = 28,230 bp
+            Length N50 = 28,230 bp
             <br>
-            Read identity N50 = 89.39%
+            Identity N50 = 89.39%
         </td>
     </tr>
 </table>
@@ -177,11 +177,11 @@ By using a larger split value, we make Filtlong less likely to split a read. Thi
     <tr>
         <td>
             <img align="right" src="misc/example_commands_4_length_priority.png" alt="length_priority" width="400">
-            Giving the length score higher priority has improved the length distribution, but the identity distribution has suffered.
+            Giving the length score higher priority has improved the length distribution, but this is offset by the presence of lower identity reads.
             <br><br>
-            Read length N50 = 43,877 bp
+            Length N50 = 43,877 bp
             <br>
-            Read identity N50 = 87.89%
+            Identity N50 = 87.89%
         </td>
     </tr>
 </table>
@@ -204,11 +204,11 @@ This smaller split value will make Filtlong split reads more often. This results
     <tr>
         <td>
             <img align="right" src="misc/example_commands_5_quality_priority.png" alt="length_priority" width="400">
-            As you would expect, these settings produce the best yet read identity distribution. Since read length now has a lower weight in the final score, many shorter reads are kept, down to the `--min_length 1000` limit.
+            These settings produce the best yet identity distribution, and most reads are now 87% identity or better. Since length now has a lower weight in the final score, many shorter reads are kept, down to the 1000 bp limit.
             <br><br>
-            Read length N50 = 14,127 bp
+            Length N50 = 14,127 bp
             <br>
-            Read identity N50 = 89.83%
+            Identity N50 = 89.83%
         </td>
     </tr>
 </table>
