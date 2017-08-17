@@ -61,8 +61,12 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 
 ## Example commands (detailed)
 
-These examples use a 1.3 Gbp read set that's part of a [barcoded 1D MinION run](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing). I assessed read quality by aligning the reads to a completed assembly using [minimap2](https://github.com/lh3/minimap2). Here is what the read length and identity distribution looks like before running Filtlong:
+These examples use a 1.3 Gbp read set that's part of a [barcoded 1D MinION run](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing). I assessed read quality by aligning the reads to a completed assembly using [minimap2](https://github.com/lh3/minimap2).
+
+Here's what the read length and identity distribution looks like before running Filtlong:
 <p align="center"><img src="misc/example_commands_0_unfiltered.png" alt="unfiltered" width="400"></p>
+The read N50 length is 24,088 bp (i.e. half the bases are in a read 24,088 bp long or longer). The read N50 identity is 85.61% (i.e. half the bases are in a read with 85.61% identity or better).
+
 
 ### Without an external reference
 
@@ -77,14 +81,14 @@ Discard any read which is shorter than 1 kbp.
 * `--keep_percent 90`<br>
 Throw out the worst 10% of reads. This is measured by bp, not by read count. So this option throws out the worst 10% of read bases.
 * `--target_bases 500000000`<br>
-If there are still more than 500 Mbp after throwing out reads under 1 kbp and the worst 10%, the remove the worst reads until only 500 Mbp remain. Useful for very large read sets.
+If there are still more than 500 Mbp after throwing out reads under 1 kbp and the worst 10%, the remove the worst reads until only 500 Mbp remain, useful for very large read sets. If the input read set is less than 500 Mbp, this setting will have no effect.
 * `input.fastq.gz`<br>
 The input long reads to be filtered.
 * `| gzip > output.fastq.gz`<br>
 Filtlong outputs the filtered reads to stdout. Pipe to gzip to keep the file size down.
 
-After running, Filtlong has cut the 1.3 Gbp down to a much better 500 Mbp subset:
 <p align="center"><img src="misc/example_commands_1_without_reference.png" alt="without_reference" width="400"></p>
+Filtlong has cut the original 1.3 Gbp of reads down to a much better 500 Mbp subset. Both the read length and identity N50s have improved, to 36,827 bp and 88.53% respectively.
 
 
 ### With Illumina read reference
@@ -98,9 +102,8 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 * `-1 illumina_1.fastq.gz -2 illumina_2.fastq.gz`<br>
 These options allow Illumina reads to be used as an external reference. You can instead use `-a` to provide an assembly as a reference, but Illumina reads are preferable if they are available.
 
-By using an external reference, Filtlong is better able to judge read quality. This shows in the resulting read stats, where almost all reads are now above 85% identity:
 <p align="center"><img src="misc/example_commands_2_with_reference.png" alt="with_reference" width="400"></p>
-
+By using an external reference, Filtlong is better able to judge read quality. This shows in an improved read identity N50 of 88.94%, and almost all reads are now over 85% identity. Since the external reference has given Filtlong has a more accurate source of read quality, the read length is getting a bit less weight and the read length N50 is only 28,713 bp (still better than the original unfiltered reads). If length is important to you, you can give it more weight (we'll get to that soon).
 
 
 ### With trimming and splitting
@@ -116,8 +119,8 @@ Trim low-quality bases from the start and end. In this context 'low-quality' mea
 * `--split 250`<br>
 Split reads whenever 250 consequence bases fail to match a k-mer in the Illumina reads. This serves to remove very poor parts of reads while keeping the good parts. A lower value will split more aggressively and a higher value will be more conservative.
 
-Trimming and splitting has further increased the output read identity:
 <p align="center"><img src="misc/example_commands_3_trim_split.png" alt="trim_split" width="400"></p>
+Trimming and splitting has further increased the read identity N50 to 89.39%. Read length N50 has dropped just a tiny bit (28,230 bp) because reads can be trimmed down and split into pieces.
 
 
 ### Length priority
@@ -131,10 +134,10 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 * `--length_weight 10`<br>
 A length weight of 10 (instead of the default of 1) makes read length the most important factor when choosing the best reads.
 * `--split 1000`<br>
-By using a larger split value, Filtlong is less likely to split a read. This helps to keep the output reads on the long side.
+By using a larger split value, we make Filtlong less likely to split a read. This helps to keep the output reads on the long side.
 
-The resulting 500 Mbp of reads are now mostly over 20 kbp, though some have mediocre identity:
 <p align="center"><img src="misc/example_commands_4_length_priority.png" alt="length_priority" width="400"></p>
+The read length N50 is now a whopping 43,877 bp. Since read quality has less weight, the N50 identity has dropped to 87.89% (still better than the original unfiltered reads).
 
 
 ### Quality priority
@@ -148,10 +151,10 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 * `--mean_q_weight 10`<br>
 A mean quality weight of 10 (instead of the default of 1) makes mean read quality the most important factor when choosing the best reads.
 * `--split 100`<br>
-By using a smaller split value, Filtlong will split reads more often. This results in shorter reads but of higher quality.
+This smaller split value will make Filtlong split reads more often. This results in shorter reads but of higher quality.
 
-The resulting 500 Mbp of reads are now very high identity, though most are under 25 kbp:
 <p align="center"><img src="misc/example_commands_5_quality_priority.png" alt="quality_priority" width="400"></p>
+As you would expect, these setting give the best read identity N50 yet: 89.83%. However, the read length N50 has suffered and is now only 14,127 bp.
 
 
 ## Full usage
@@ -204,18 +207,18 @@ For more information, go to: https://github.com/rrwick/Filtlong
 When run, Filtlong carries out the following steps:
 
 1. If an external reference was provided, hash all of the reference's 16-mers.
-  * If the reference is an assembly, then Filtlong simply hashes all 16-mers in the assembly.
-  * If the reference is in Illumina reads, then the 16-mer has to be encountered a few times before it's hashed (to avoid hashing 16-mers that result from read errors).
-2. Score each of the input reads.
-  * Each read gets a final scores which is a function of its length, mean quality and window quality (see [Read scoring](#read-scoring) for more information).
-  * If a read fails to meet any of the hard thresholds (`--min_length`, `--min_mean_q` or `--min_window_q`) then it is marked as 'fail' now.
-  * If `--trim` or `--split` was used, then 'child' reads are made here (see [Trimming and splitting](#trimming-and-splitting) for more information). Each child read is scored using the same read scoring logic.
-  * If `--verbose` was used, display detailed information about the read scoring.
+    * If the reference is an assembly, then Filtlong simply hashes all 16-mers in the assembly.
+    * If the reference is in Illumina reads, then the 16-mer has to be encountered a few times before it's hashed (to avoid hashing 16-mers that result from read errors).
+2. Look at each of the input reads to get length and quality information.
+    * If a read fails to meet any of the hard thresholds (`--min_length`, `--min_mean_q` or `--min_window_q`) then it is marked as 'fail' now.
+    * If `--trim` or `--split` was used, then 'child' reads are made here (see [Trimming and splitting](#trimming-and-splitting) for more information). Each child read is scored using the same read scoring logic.
+    * If `--verbose` was used, display detailed information about the read scoring.
 3. Gather up all reads eligible for output. If neither `--trim` nor `--split` was used, this is simply the original set of reads. If `--trim` or `--split` was used, then the child reads replace the original reads.
-4. If `--target_bases` and/or `--keep_percent` was used, sort the reads by quality and set an appropriate score threshold. Reads which fall below the threshold are marked as 'fail'.
-  * If both `--target_bases` and `--keep_percent` are used, then the threshold is set to the more stringent of the two.
+4. Give each read a final score (see [Read scoring](#read-scoring) for more information).
+4. If `--target_bases` and/or `--keep_percent` was used, sort the reads by their final score and set an appropriate threshold. Reads which fall below the threshold are marked as 'fail'.
+    * If both `--target_bases` and `--keep_percent` are used, the threshold is set to the more stringent of the two.
 5. Output all reads which are not marked as 'fail' to stdout.
-  * Reads are outputted in the same order as the input file (not in in quality-sorted order).
+    * Reads are outputted in the same order as the input file (not in in quality-sorted order).
 
 
 ## Read scoring
@@ -227,20 +230,21 @@ The length score is pretty simple: longer is better and [here is a graph of the 
 
 * __Mean quality__<br>
 The mean quality is calculated in two different ways, depending on whether an external reference was used.
-  * If an external reference was not used, the mean quality score is the average read identity, as indicated by the Phred quality scores. For example, consider a read where all the fastq quality characters are `+`. The qscores for each base are 10 which equates to a 90% chance of being correct. This read would then have a mean quality score of 90.
-  * If an external reference was used, then Filtlong tallies up the 16-mers in the reference. Read bases are then scored as either 100 (contained in a 16-mer from the reference) or 0 (not contained in a 16-mer from the reference). The mean read score is a mean of all these base scores.
+  * If an external reference was not used, the mean quality is the mean read identity, as indicated by the Phred quality scores. For example, consider a read where all the fastq quality characters are `+`. The qscores for each base are 10 which equates to a 90% chance of being correct. This read would then have a mean quality score of 90.
+  * If an external reference was used, then Filtlong tallies up the 16-mers in the reference. Read bases are then given a quality of either 100 (contained in a 16-mer from the reference) or 0 (not contained in a 16-mer from the reference). The read's mean quality is a mean of its base qualities.
 
 * __Mean quality score__<br>
 Read mean qualities are converted to a z-score and scaled to the range 0-100 to make the mean quality score. This means that regardless of the actual mean quality distribution, the read with the worst mean quality will get a mean quality score of 0 and the read with the best mean quality will get a mean quality score of 100.
 
 * __Window quality__<br>
-The window quality is the mean quality for the lowest scoring window in the read. Each window's quality is calculated in the same way as the mean quality score (just for the window instead of for the whole read). The default window size is 250 but can be changed with `--window_size`.
+
+The window quality is determined by looking at the mean quality for a sliding window over the read (calculated in the same way as the mean quality score). The final window quality is the lowest value for the read, indicating the quality of the read's weakest point. The default window size is 250 but can be changed with `--window_size`.
 
 * __Window quality score__<br>
 The window quality score is the mean quality score scaled down by the window quality to mean quality ratio.
 
-The read's final score is then a combination of the three scores:
-* First, Filtlong takes the geometric weighted mean of the length score and the mean quality score. The weights are equal (both 1) by default, but you can adjust this with `--length_weight` and `--mean_q_weight` to make length or quality more or less important. By using a geometric mean instead of an arithmetic mean, the mean will be closer to the weaker of the two component scores.
+The read's final score is then a weighted combination of the three scores:
+* First, Filtlong takes the weighted geometric mean of the length score and the mean quality score. The weights are equal (both 1) by default, but you can adjust this with `--length_weight` and `--mean_q_weight` to make length or quality more or less important. By using a geometric mean instead of an arithmetic mean, the mean will be closer to the weaker of the two component scores.
 * Then the score is scaled down by the ratio of the window quality score to the mean quality score.
 * Expressed mathematically, the formula for the final read score is:
 <p align="center"><img src="misc/score_equation.png" alt="score equation" width="500"></p>
