@@ -33,6 +33,9 @@ public:
     ~Read();
 
     void print_verbose_read_info();
+    void print_scores(size_t name_length);
+
+    void set_final_score(double length_weight, double mean_q_weight, double window_q_weight);
 
     std::string m_name;
 
@@ -57,7 +60,6 @@ private:
     double get_window_quality(std::vector<double> & qualities, size_t window_size);
 
     double get_length_score();
-    double get_final_score(double length_weight, double mean_q_weight, double window_q_weight);
 
     double qscore_to_quality(char qscore);
 };

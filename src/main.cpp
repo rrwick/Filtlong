@@ -21,6 +21,7 @@
 #include <limits>
 #include <unordered_map>
 #include <utility>
+#include <math.h>
 
 #include "kseq.h"
 #include "read.h"
@@ -118,13 +119,15 @@ int main(int argc, char **argv)
 
             if (total_bases - last_progress >= 483611) {  // a big prime number so progress updates don't round off
                 last_progress = total_bases;
-                print_read_score_progress(reads.size(), total_bases);
+                if (!args.verbose)
+                    print_read_score_progress(reads.size(), total_bases);
             }
         }
     }
     kseq_destroy(seq);
     gzclose(fp);
-    print_read_score_progress(reads.size(), total_bases);
+    if (!args.verbose)
+        print_read_score_progress(reads.size(), total_bases);
     std::cerr << "\n";
 
     // Gather up reads to output. If a read has been trimmed/split, it's these child reads which we use, not the
@@ -138,6 +141,11 @@ int main(int argc, char **argv)
             for (auto child : read->m_child_reads)
                 reads2.push_back(child);
         }
+    }
+    size_t longest_read_name = 0;
+    for (auto read : reads2) {
+        if (read->m_name.size() > longest_read_name)
+            longest_read_name = read->m_name.size();
     }
 
     // If --trim or --split was used, display some summary info here.
@@ -154,6 +162,53 @@ int main(int argc, char **argv)
         std::cerr << int_to_string(reads2.size()) << " reads (" << int_to_string(total_after_trim_split) << " bp)\n";
     }
     std::cerr << "\n";
+
+    // Go through the mean quality scores and find the min, max, mean and standard deviation.
+    double min_quality = 100.0;
+    double max_quality = 0.0;
+    double quality_sum = 0.0;
+    for (auto read : reads2) {
+        quality_sum += read->m_mean_quality;
+        if (read->m_mean_quality > max_quality)
+            max_quality = read->m_mean_quality;
+        if (read->m_mean_quality < min_quality)
+            min_quality = read->m_mean_quality;
+    }
+    double mean_quality = quality_sum / reads2.size();
+    double stdev_sum = 0.0;
+    for (auto read : reads2) {
+        double mean_diff = read->m_mean_quality - mean_quality;
+        stdev_sum += mean_diff * mean_diff;
+    }
+    double stdev_quality = sqrt(stdev_sum / reads2.size());
+    double min_z_score, max_z_score;
+    if (stdev_quality > 0.0) {
+        min_z_score = (min_quality - mean_quality) / stdev_quality;
+        max_z_score = (max_quality - mean_quality) / stdev_quality;
+    }
+    else {
+        min_z_score = 1.0;
+        max_z_score = 1.0;
+    }
+    double max_min_z_diff = max_z_score - min_z_score;
+
+    // Now normalise each read's quality scores.
+    if (args.verbose)
+        std::cerr << "\n\n" << "Read name" << "\t" << "Length score" << "\t" << "Mean quality score" << "\t"
+                  << "Window quality score" << "\t" << "Final score" << "\n";
+    for (auto read : reads2) {
+        double window_ratio = read->m_window_quality / read->m_mean_quality;
+        if (window_ratio > 1.0)
+            window_ratio = 1.0;
+        double quality_z_score = (read->m_mean_quality - mean_quality) / stdev_quality;
+        read->m_mean_quality = 100.0 * (quality_z_score - min_z_score) / max_min_z_diff;
+        read->m_window_quality = read->m_mean_quality * window_ratio;
+        read->set_final_score(args.length_weight, args.mean_q_weight, args.window_q_weight);
+        if (args.verbose)
+            read->print_scores(longest_read_name);
+    }
+    if (args.verbose)
+        std::cerr << "\n";
 
     // If the user set thresholds using either --target_bases or --keep_percent, then we need to see which additional
     // reads should be labelled as failed.

@@ -59,9 +59,7 @@ Read::Read(std::string name, char * seq, char * qscores, int length, Kmers * kme
 
     m_mean_quality = get_mean_quality(qualities);
     m_window_quality = get_window_quality(qualities, args->window_size);
-
     m_length_score = get_length_score();
-    m_final_score = get_final_score(args->length_weight, args->mean_q_weight, args->window_q_weight);
 
     // See if the read failed any of the hard cut-offs.
     m_passed = true;
@@ -150,9 +148,8 @@ Read::~Read() {
 }
 
 
-std::string pad(int num, const size_t width)
+std::string pad(std::string s, const size_t width)
 {
-    std::string s = std::to_string(num);
     if (width > s.size())
         return s + std::string(width - s.size(), ' ');
     else
@@ -160,16 +157,19 @@ std::string pad(int num, const size_t width)
 }
 
 
+std::string pad(int num, const size_t width)
+{
+    std::string s = std::to_string(num);
+    return pad(s, width);
+}
+
+
 void Read::print_verbose_read_info() {
     std::cerr << "\n" << m_name << "\n";
 
     std::cerr << "            length = " << pad(m_length, 11);
-    std::cerr << "length score = " << double_to_string(m_length_score) << "\n";
-
-    std::cerr << "      mean quality = " << double_to_string(m_mean_quality);
-    std::cerr << "    window quality = " << double_to_string(m_window_quality);
-
-    std::cerr << "   final score = " << double_to_string(m_final_score) << "\n";
+    std::cerr << "mean quality = " << double_to_string(m_mean_quality);
+    std::cerr << "      window quality = " << double_to_string(m_window_quality) << "\n";
 
     if (m_bad_ranges.size() > 0) {
         std::cerr << "        bad ranges = ";
@@ -191,6 +191,15 @@ void Read::print_verbose_read_info() {
     }
     for (auto child : m_child_reads)
         child->print_verbose_read_info();
+}
+
+
+void Read::print_scores(size_t name_length) {
+    std::cerr << pad(m_name, name_length) << "\t"
+              << double_to_string(m_length_score) << "\t"
+              << double_to_string(m_mean_quality) << "\t"
+              << double_to_string(m_window_quality) << "\t"
+              << double_to_string(m_final_score) << "\n";
 }
 
 
@@ -235,7 +244,7 @@ double Read::get_length_score() {
 
 // The final score is a weighted geometric mean of the length score and the mean quality. It is then scaled down using
 // the window quality.
-double Read::get_final_score(double length_weight, double mean_q_weight, double window_q_weight) {
+void Read::set_final_score(double length_weight, double mean_q_weight, double window_q_weight) {
 
     // First get the weighted geometric mean of the length score and the mean quality.
     double product = pow(m_length_score, length_weight) * pow(m_mean_quality, mean_q_weight);
@@ -250,7 +259,7 @@ double Read::get_final_score(double length_weight, double mean_q_weight, double 
     double window_weight_fraction = window_q_weight / total_weight;
     double non_window_weight_fraction = 1.0 - window_weight_fraction;
     scaling_factor = non_window_weight_fraction + (scaling_factor * window_weight_fraction);
-    return final_score * scaling_factor;
+    m_final_score = final_score * scaling_factor;
 }
 
 
