@@ -8,7 +8,8 @@ Filtlong is a tool for filtering long reads by quality. It can take a large set 
 
 * [Requirements](#requirements)
 * [Installation](#installation)
-* [Example commands](#example-commands)
+* [Example commands (quick)](#example-commands-quick)
+* [Example commands (detailed)](#example-commands-detailed)
 * [Full usage](#full-usage)
 * [Method](#method)
 * [Read scoring](#read-scoring)
@@ -42,7 +43,26 @@ cp bin/filtlong ~/.local/bin
 ```
 
 
-## Example commands
+## Example commands (quick)
+
+
+### Without an external reference
+
+```
+filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fastq.gz | gzip > output.fastq.gz
+```
+
+### With an external reference
+
+```
+filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 250 input.fastq.gz | gzip > output.fastq.gz
+```
+
+
+## Example commands (detailed)
+
+These examples use a 1.3 Gbp read set that's part of a [barcoded 1D MinION run](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing). I assessed read quality by aligning the reads to a completed assembly using [minimap2](https://github.com/lh3/minimap2). Here is what the read length and identity distribution looks like before running Filtlong:
+<p align="center"><img src="misc/example_commands_0_unfiltered.png" alt="unfiltered" width="400"></p>
 
 ### Without an external reference
 
@@ -63,22 +83,75 @@ The input long reads to be filtered.
 * `| gzip > output.fastq.gz`<br>
 Filtlong outputs the filtered reads to stdout. Pipe to gzip to keep the file size down.
 
+After running, Filtlong has cut the 1.3 Gbp down to a much better 500 Mbp subset:
+<p align="center"><img src="misc/example_commands_1_without_reference.png" alt="without_reference" width="400"></p>
+
 
 ### With Illumina read reference
 
 When an external reference is provided, Filtlong ignores the Phred quality scores and instead judges read quality using k-mer matches to the reference. This is a more accurate gauge of quality and enables a couple more options.
 
 ```
-filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 250 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fastq.gz | gzip > output.fastq.gz
 ```
 
 * `-1 illumina_1.fastq.gz -2 illumina_2.fastq.gz`<br>
-Illumina reads as an external reference. You can instead use `-a` to provide an assembly as a reference, but Illumina reads are preferable if they are available.
+These options allow Illumina reads to be used as an external reference. You can instead use `-a` to provide an assembly as a reference, but Illumina reads are preferable if they are available.
+
+By using an external reference, Filtlong is better able to judge read quality. This shows in the resulting read stats, where almost all reads are now above 85% identity:
+<p align="center"><img src="misc/example_commands_2_with_reference.png" alt="with_reference" width="400"></p>
+
+
+
+### With trimming and splitting
+
+When an external reference is provided, you can turn on read trimming and splitting to further increase read quality. See [Trimming and splitting](#trimming-and-splitting) for more information.
+
+```
+filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 250 input.fastq.gz | gzip > output.fastq.gz
+```
+
 * `--trim`<br>
 Trim low-quality bases from the start and end. In this context 'low-quality' means bases which do not match a k-mer in the Illumina reads. This ensures the each read starts and ends with solid sequence.
 * `--split 250`<br>
 Split reads whenever 250 consequence bases fail to match a k-mer in the Illumina reads. This serves to remove very poor parts of reads while keeping the good parts. A lower value will split more aggressively and a higher value will be more conservative.
 
+Trimming and splitting has further increased the output read identity:
+<p align="center"><img src="misc/example_commands_3_trim_split.png" alt="trim_split" width="400"></p>
+
+
+### Length priority
+
+You can adjust the relative importance of Filtlong's read metrics. In this example, more weight is given to read length.
+
+```
+filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 1000 --length_weight 10 input.fastq.gz | gzip > output.fastq.gz
+```
+
+* `--length_weight 10`<br>
+A length weight of 10 (instead of the default of 1) makes read length the most important factor when choosing the best reads.
+* `--split 1000`<br>
+By using a larger split value, Filtlong is less likely to split a read. This helps to keep the output reads on the long side.
+
+The resulting 500 Mbp of reads are now mostly over 20 kbp, though some have mediocre identity:
+<p align="center"><img src="misc/example_commands_4_length_priority.png" alt="length_priority" width="400"></p>
+
+
+### Quality priority
+
+You can adjust the relative importance of Filtlong's read metrics. In this example, more weight is given to read length.
+
+```
+filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 100 --mean_q_weight 10 input.fastq.gz | gzip > output.fastq.gz
+```
+
+* `--mean_q_weight 10`<br>
+A mean quality weight of 10 (instead of the default of 1) makes mean read quality the most important factor when choosing the best reads.
+* `--split 100`<br>
+By using a smaller split value, Filtlong will split reads more often. This results in shorter reads but of higher quality.
+
+The resulting 500 Mbp of reads are now very high identity, though most are under 25 kbp:
+<p align="center"><img src="misc/example_commands_5_quality_priority.png" alt="quality_priority" width="400"></p>
 
 
 ## Full usage
