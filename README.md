@@ -55,7 +55,7 @@ filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fast
 * `--min_length 1000`<br>
 Discard any read which is shorter than 1 kbp.
 * `--keep_percent 90`<br>
-Throw out the worst 10% of reads.
+Throw out the worst 10% of reads. This is measured by bp, not by read count. So this option throws out the worst 10% of read bases.
 * `--target_bases 500000000`<br>
 If there are still more than 500 Mbp after throwing out reads under 1 kbp and the worst 10%, the remove the worst reads until only 500 Mbp remain. Useful for very large read sets.
 * `input.fastq.gz`<br>
@@ -152,15 +152,21 @@ Reads are scored based on three separate metrics: length, mean quality and windo
 * __Length score__<br>
 The length score is pretty simple: longer is better and [here is a graph of the score function](https://www.desmos.com/calculator/5m1lwd7fye). A read length of 5 kbp is considered mediocre and gets a score of 50. Shorter reads get a lower score and the score approaches 100 as the read length goes to infinity.
 
-* __Mean quality score__<br>
-The mean quality score is calculated in two different ways, depending on whether an external reference was used.
+* __Mean quality__<br>
+The mean quality is calculated in two different ways, depending on whether an external reference was used.
   * If an external reference was not used, the mean quality score is the average read identity, as indicated by the Phred quality scores. For example, consider a read where all the fastq quality characters are `+`. The qscores for each base are 10 which equates to a 90% chance of being correct. This read would then have a mean quality score of 90.
   * If an external reference was used, then Filtlong tallies up the 16-mers in the reference. Read bases are then scored as either 100 (contained in a 16-mer from the reference) or 0 (not contained in a 16-mer from the reference). The mean read score is a mean of all these base scores.
 
-* __Window quality score__<br>
-The window quality score is the mean quality score for the lowest scoring window in the read. Each window's quality is calculated in the same way as the mean quality score (just for the window instead of for the whole read). The default window size is 250 but can be changed with `--window_size`.
+* __Mean quality score__<br>
+Read mean qualities are converted to a z-score and scaled to the range 0-100 to make the mean quality score. This means that regardless of the actual mean quality distribution, the read with the worst mean quality will get a mean quality score of 0 and the read with the best mean quality will get a mean quality score of 100.
 
-The read's final score is then a combination of those three scores:
+* __Window quality__<br>
+The window quality is the mean quality for the lowest scoring window in the read. Each window's quality is calculated in the same way as the mean quality score (just for the window instead of for the whole read). The default window size is 250 but can be changed with `--window_size`.
+
+* __Window quality score__<br>
+The window quality score is the mean quality score scaled down by the window quality to mean quality ratio.
+
+The read's final score is then a combination of the three scores:
 * First, Filtlong takes the geometric weighted mean of the length score and the mean quality score. The weights are equal (both 1) by default, but you can adjust this with `--length_weight` and `--mean_q_weight` to make length or quality more or less important. By using a geometric mean instead of an arithmetic mean, the mean will be closer to the weaker of the two component scores.
 * Then the score is scaled down by the ratio of the window quality score to the mean quality score.
 * Expressed mathematically, the formula for the final read score is:
@@ -201,13 +207,12 @@ Now _any_ run of non-matching bases is removed, regardless of length. The read i
 
 ### Real read example
 
-Here's a real example of Filtlong's trimming and splitting. The text shown in this example is what you'd see if you ran Filtlong with the `--verbose` option.
+Here's a real example of Filtlong's trimming and splitting. The output shown is what you'd see if you ran Filtlong with the `--verbose` option.
 
 The input read is quite long and got a very good length score. Its mean quality score is decent but the window quality is zero, indicating that the read has windows with no bases matching the reference 16-mers:
 ```
 bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template
-            length = 117786     length score = 95.93
-      mean quality = 53.02    window quality =  0.00   final score = 47.54
+            length = 117786     mean quality = 53.02      window quality =  0.00
 ```
 
 The read's bad ranges are the coordinates non-matching start/end regions (because of `--trim`) or runs of 250 or more non-matching bases (because of `--split 250`). The child ranges are the inverse: bases that aren't in the bad ranges:
@@ -219,35 +224,28 @@ The read's bad ranges are the coordinates non-matching start/end regions (becaus
 A child read is made from each child range and assessed separately. The original read is no longer eligible for output – only the child reads are. Here are the first few of them:
 ```
 bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_26-71401
-            length = 71376      length score = 93.45
-      mean quality = 74.09    window quality =  6.80   final score = 58.02
+            length = 71376      mean quality = 74.09      window quality =  6.80
 
 bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_71746-72393
-            length = 648        length score = 11.47
-      mean quality = 15.12    window quality =  6.40   final score = 10.64
+            length = 648        mean quality = 15.12      window quality =  6.40
 
 bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_72684-72742
-            length = 59         length score =  1.17
-      mean quality = 98.31    window quality = 98.31   final score = 10.71
+            length = 59         mean quality = 98.31      window quality = 98.31
 
 bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_73050-77279
-            length = 4230       length score = 45.83
-      mean quality = 25.11    window quality =  6.40   final score = 25.50
+            length = 4230       mean quality = 25.11      window quality =  6.40
 
 bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_77628-78710
-            length = 1083       length score = 17.80
-      mean quality = 14.68    window quality =  6.40   final score = 13.13
+            length = 1083       mean quality = 14.68      window quality =  6.40
 
 bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_79056-85575
-            length = 6520       length score = 56.60
-      mean quality = 23.27    window quality =  6.40   final score = 27.52
+            length = 6520       mean quality = 23.27      window quality =  6.40
 
 bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_85948-86620
-            length = 673        length score = 11.86
-      mean quality = 18.28    window quality =  6.80   final score = 11.64
+            length = 673        mean quality = 18.28      window quality =  6.80
 ```
 
-You can see the first child read is about 60% of the original read and despite being shorter, its higher quality gives it a better final score. Many of the remaining pieces are very short and have therefore earned low scores. Depending on the output thresholds (like `--min_length` and `--keep_percent`) these may fail and will be discarded.
+You can see the first child read is about 60% of the original read and despite being shorter, its higher quality will earn it a better final score. Many of the remaining pieces are very short and will therefore earn low scores. Depending on the output thresholds (like `--min_length` and `--keep_percent`) these may fail and will be discarded.
 
 
 
