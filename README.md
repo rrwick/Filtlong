@@ -1,6 +1,6 @@
 <p align="center"><img src="misc/filtlong_logo.png" alt="Filtlong" width="450"></p>
 
-Filtlong is a tool for filtering long reads. It can take a set of long reads and produce a smaller, better subset. It uses both read length (longer is better) and read identity (higher is better) when choosing which reads pass the filter.
+Filtlong is a tool for filtering long reads by quality. It can take a set of long reads and produce a smaller, better subset. It uses both read length (longer is better) and read identity (higher is better) when choosing which reads pass the filter.
 
 
 
@@ -23,7 +23,7 @@ Filtlong is a tool for filtering long reads. It can take a set of long reads and
 ## Requirements
 
 * Linux or macOS
-* C++ compiler (GCC v4.8 or later should work)
+* C++ compiler (GCC 4.8 or later should work)
 * zlib (usually included with Linux/macOS)
 
 
@@ -163,14 +163,14 @@ You can adjust the relative importance of Filtlong's read metrics. In this examp
 filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 1000 --length_weight 10 input.fastq.gz | gzip > output.fastq.gz
 ```
 
-* `--length_weight 10` ← A length weight of 10 (instead of the default of 1) makes read length the most important factor when choosing the best reads.
-* `--split 1000` ← By using a larger split value, we make Filtlong less likely to split a read. This helps to keep the output reads on the long side.
+* `--length_weight 10` ← A length weight of 10 (instead of the default of 1) makes read length more important when choosing the best reads.
+* `--split 1000` ← This larger split value makes Filtlong less likely to split a read. I.e. a read has to have a _lot_ of consecutive bad bases before it gets split. This helps to keep the output reads longer.
 
 <table>
     <tr>
         <td>
             <img align="right" src="misc/example_commands_4_length_priority.png" alt="length_priority" width="400">
-            A higher length score priority has improved the length distribution, but the length-quality trade-off has resulted in more low-identity reads.
+            These settings greatly improve the length distribution, but the length-quality trade-off results in more low-identity reads.
             <br><br>
             Length N50 = 43,877 bp
             <br>
@@ -188,14 +188,14 @@ You can adjust the relative importance of Filtlong's read metrics. In this examp
 filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 100 --mean_q_weight 10 input.fastq.gz | gzip > output.fastq.gz
 ```
 
-* `--mean_q_weight 10` ← A mean quality weight of 10 (instead of the default of 1) makes mean read quality the most important factor when choosing the best reads.
-* `--split 100` ← This smaller split value will make Filtlong split reads more often. This results in shorter reads but of higher quality.
+* `--mean_q_weight 10` ← A mean quality weight of 10 (instead of the default of 1) makes mean read quality more important when choosing the best reads.
+* `--split 100` ← This smaller split value makes Filtlong split reads more often. I.e. even a relatively small stretch of bad bases will result in a split, giving shorter reads but of higher quality.
 
 <table>
     <tr>
         <td>
             <img align="right" src="misc/example_commands_5_quality_priority.png" alt="length_priority" width="400">
-            A higher mean quality score priority produces the best identity distribution, with most reads now 87% identity or better. Length now has a relatively lower weight in the score function, so many shorter reads are kept.
+            These settings produce the best identity distribution, with most reads now 87% identity or better. Length now has a relatively lower weight in the score function, so many shorter reads are kept.
             <br><br>
             Length N50 = 14,127 bp
             <br>
@@ -214,12 +214,13 @@ usage: filtlong {OPTIONS} [input_reads]
 Filtlong: a quality filtering tool for Nanopore and PacBio reads
 
 positional arguments:
-   input_reads                          Input long reads to be filtered
+   input_reads                          input long reads to be filtered
 
 optional arguments:
    output thresholds:
       -t[int], --target_bases [int]        keep only the best reads up to this many total bases
-      -p[float], --keep_percent [float]    keep only this fraction of the best reads
+      -p[float], --keep_percent [float]    keep only this percentage of the best reads (measured by
+                                           bases)
       --min_length [int]                   minimum length threshold
       --min_mean_q [float]                 minimum mean quality threshold
       --min_window_q [float]               minimum window quality threshold
@@ -236,13 +237,14 @@ optional arguments:
       --window_q_weight [float]            weight given to the window quality score (default: 1)
 
    read manipulation:
-      --trim                               trim reads non-k-mer-matching bases from start/end of reads
-      --split [split]                      split reads when this many bases lack a k-mer match
+      --trim                               trim non-k-mer-matching bases from start/end of reads
+      --split [split]                      split reads at this many (or more) consecutive
+                                           non-k-mer-matching bases
 
    other:
       --window_size [int]                  size of sliding window used when measuring window quality
                                            (default: 250)
-      --verbose                            print a table with info for each read
+      --verbose                            verbose output to stderr with info for each read
       --version                            display the program version and quit
 
    -h, --help                           display this help menu
@@ -291,13 +293,14 @@ The window quality is determined by looking at the mean quality for a sliding wi
 * __Window quality score__<br>
 The window quality score is the mean quality score scaled down by the window quality to mean quality ratio. For example, consider a read with a mean quality of 90 which resulted in a mean quality score of 60. If the window quality was 45 (half the mean quality), then the window quality score will be 30 (half the mean quality score).
 
-The read's final score is then a weighted combination of the three scores:
-* First, Filtlong takes the weighted geometric mean of the length score and the mean quality score. The weights are equal (both 1) by default, but you can adjust this with `--length_weight` and `--mean_q_weight` to make length or quality more or less important. By using a geometric mean instead of an arithmetic mean, the mean will be closer to the weaker of the two component scores.
-* The score is then scaled down by a factor based on the ratio of the window quality score to the mean quality score. This factor is adjusted by the relative strength of the window quality weight.
+__Final score__<br>
+The read's final score is a combination of the three component scores:
+* Filtlong first takes the weighted geometric mean of the length score and the mean quality score. The weights are equal (both 1) by default, but you can adjust this with `--length_weight` and `--mean_q_weight` to make one or the other more important.
+* The score is then scaled down by a factor based on the window quality score to mean quality score ratio. This factor is adjusted by the relative strength of the window quality weight (`--window_q_weight`).
 * Expressed mathematically:
 <p align="center"><img src="misc/score_equation.png" alt="score equation" width="500"></p>
 
-It is the read's final score which is used to determine thresholds for the `--keep_percent` and `--target_bases` options.
+The final score which is used to determine thresholds for the `--keep_percent` and `--target_bases` options and therefore determines whether a read is included in the output.
 
 
 
@@ -361,16 +364,16 @@ bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_73050-77279
             length = 4230       mean quality = 25.11      window quality =  6.40
 ```
 
-And here is the read visualised with child ranges in blue and bad ranges in red (numbers are length in kbp):
+And here is the read visualised with child ranges in blue and bad ranges in red (values are length in kbp):
 <p align="center"><img src="misc/trim_split_example_real_read.png" alt="Real read trim split" width="100%"></p>
 
-You can see that the result of trimming/splitting is that we've turned a very long read with some bad regions into some smaller reads (one of which is still quite long) without bad regions. Depending on the output thresholds (like `--min_length` and `--keep_percent`) many of the smaller child reads may fail and won't be outputted, leaving us with just the longest child reads.
+Trimming/splitting has turned a very long read with some bad regions into some smaller reads (one of which is still quite long) without bad regions. Depending on the output thresholds (like `--min_length` and `--keep_percent`) many of the smaller child reads may fail and won't be outputted, leaving us with just the longest child reads.
 
 
 ## FAQ
 
 * Why is the logo a hot dog?
-  * It's a _footlong_ hot dog. Filtlong... footlong... get it?!  Not all my Australian colleagues were familiar, so maybe footlong hot dogs are a US thing. Leave it to Americans to take a fatty, unhealthy food and make an extra large version :smile:
+  * It's a _footlong_ hot dog. Filtlong... footlong... get it?! Not all my Australian colleagues were familiar with footlong hot dogs, so maybe they are a US thing. Leave it to Americans to take a fatty, unhealthy food and make an extra large version :smile:
 * Why does Filtlong use a k-mer size of 16 when hashing reference k-mers?
   * Because I can fit a 16-mer sequence neatly into a 32-bit unsigned integer ([like this](https://github.com/rrwick/Filtlong/blob/ce99bc062bb1611f38deb5e7502cfb66b98598ae/src/kmers.cpp#L222-L229)). It also seemed like a good balance between small k-mers where there's more risk of chance matches and large k-mers where noisy long reads will struggle to match. I haven't empirically tested the effectiveness of different k-mer sizes though – might be good to check out for a future version of Filtlong.
 
@@ -379,13 +382,12 @@ You can see that the result of trimming/splitting is that we've turned a very lo
 
 I owe many thanks to [Kat Holt](https://holtlab.net/) and [Louise Judd](https://scholar.google.com.au/citations?user=eO22mYUAAAAJ) for keeping me well supplied with Nanopore reads.
 
-Filtlong makes use of some nice open source libraries:
+Filtlong makes use of some nice open source libraries – thank you to the developers:
 * [Klib](https://github.com/attractivechaos/klib/) for easy fastq parsing
 * [args](https://github.com/Taywee/args) for command-line argument parsing.
 * [C++ bloom filter library](https://github.com/ArashPartow/bloom) for some memory-saving in the k-mer counting
 
-Thank you to the developers of these libraries!
-
+Finally, credit for the great punny program name goes to my wife, Rosalind!
 
 
 ## License
