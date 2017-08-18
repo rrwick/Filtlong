@@ -64,6 +64,9 @@ public:
     int window_size;
     bool verbose;
 
+
+private:
+    bool does_file_exist(std::string fileName);
 };
 
 #endif // ARGUMENTS_H

@@ -20,6 +20,7 @@
 #include <sys/ioctl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <fstream>
 
 #include "args.h"
 
@@ -228,4 +229,25 @@ Arguments::Arguments(int argc, char **argv) {
         parsing_result = BAD;
         return;
     }
+
+    // Check to make sure files exist.
+    std::vector<std::string> files;
+    files.push_back(input_reads);
+    for (auto f : illumina_reads)
+        files.push_back(f);
+    if (assembly_set)
+        files.push_back(assembly);
+    for (auto f : files) {
+        if (!does_file_exist(f)) {
+            std::cerr << "Error: cannot find file: " << f << "\n";
+            parsing_result = BAD;
+            return;
+        }
+    }
+}
+
+
+bool Arguments::does_file_exist(std::string filename){
+    std::ifstream infile(filename);
+    return infile.good();
 }

@@ -63,11 +63,11 @@ Read::Read(std::string name, char * seq, char * qscores, int length, Kmers * kme
 
     // See if the read failed any of the hard cut-offs.
     m_passed = true;
-    if (m_length < args->min_length)
+    if (args->min_length_set && m_length < args->min_length)
         m_passed = false;
-    else if (m_mean_quality < args->min_mean_q)
+    else if (args->min_mean_q_set && m_mean_quality < args->min_mean_q)
         m_passed = false;
-    else if (m_window_quality < args->min_window_q)
+    else if (args->min_window_q_set && m_window_quality < args->min_window_q)
         m_passed = false;
 
     m_first_base_in_kmer = -1;
