@@ -76,14 +76,14 @@ Arguments::Arguments(int argc, char **argv) {
     parser.helpParams.eachgroupindent = indent_size;
 
     args::Positional<std::string> input_reads_arg(parser, "input_reads",
-                                      "Input long reads to be filtered");
+                                      "input long reads to be filtered");
 
     args::Group thresholds_group(parser, "output thresholds:");
     i_arg target_bases_arg(thresholds_group, "int",
                            "keep only the best reads up to this many total bases",
                            {'t', "target_bases"});
     d_arg keep_percent_arg(thresholds_group, "float",
-                           "keep only this fraction of the best reads",
+                           "keep only this percentage of the best reads (measured by bases)",
                            {'p', "keep_percent"});
     i_arg min_length_arg(thresholds_group, "int",
                          "minimum length threshold",
@@ -119,16 +119,14 @@ Arguments::Arguments(int argc, char **argv) {
                               "weight given to the window quality score (default: 1)",
                               {"window_q_weight"}, 1.0);
 
-    // Might need a scoring options group here as well. This could have parameters to adjust how lengths and qualities
-    // are translated into scores.
-    // E.g. half_length_score: reads of this length get a 50% score
+    // TO DO: half_length_score: reads of this length get a 50% score (currently hard-coded at 5000)
 
     args::Group manipulation_group(parser, "NLread manipulation:");    // The NL at the start results in a newline
     f_arg trim_arg(manipulation_group, "trim",
-                   "trim reads non-k-mer-matching bases from start/end of reads",
+                   "trim non-k-mer-matching bases from start/end of reads",
                    {"trim"});
     i_arg split_arg(manipulation_group, "split",
-                    "split reads when this many bases lack a k-mer match",
+                    "split reads at this many (or more) consecutive non-k-mer-matching bases",
                     {"split"});
 
     args::Group other_group(parser, "NLother:");    // The NL at the start results in a newline
@@ -136,7 +134,7 @@ Arguments::Arguments(int argc, char **argv) {
                           "size of sliding window used when measuring window quality (default: 250)",
                           {"window_size"}, 250);
     f_arg verbose_arg(other_group, "verbose",
-                      "print a table with info for each read",
+                      "verbose output to stderr with info for each read",
                       {"verbose"});
     f_arg version_arg(other_group, "version",
                       "display the program version and quit",
