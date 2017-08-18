@@ -23,7 +23,7 @@ Filtlong is a tool for filtering long reads. It can take a set of long reads and
 ## Requirements
 
 * Linux or macOS
-* C++ compiler (with C++11 support, any reasonably modern compiler should be fine)
+* C++ compiler (GCC v4.8 or later should work)
 * zlib (usually included with Linux/macOS)
 
 
