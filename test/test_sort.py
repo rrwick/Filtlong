@@ -37,9 +37,7 @@ def load_fastq(filename):
 
 
 class TestSort(unittest.TestCase):
-    """
-    These tests verify the read trimming functionality.
-    """
+
     def run_command(self, command):
         binary_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bin', 'filtlong')
         input_path = os.path.join(os.path.dirname(__file__), 'test_sort.fastq')

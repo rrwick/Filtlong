@@ -242,6 +242,69 @@ Arguments::Arguments(int argc, char **argv) {
             return;
         }
     }
+
+    // If nothing is set, then Filtlong won't do anything. Give an error message and quit.
+    if (!trim && !split_set && !target_bases_set && !keep_percent_set &&
+            !min_length_set && !min_mean_q_set && !min_window_q_set) {
+        std::cerr << "Error: no thresholds set, you must use one of the following options:\n";
+        std::cerr << "target_bases, keep_percent, min_length, min_mean_q, min_window_q, trim, split\n";
+        parsing_result = BAD;
+        return;
+    }
+
+    // Non-positive target_bases doesn't make sense.
+    if (target_bases_set && target_bases <= 0) {
+        std::cerr << "Error: the value for --target_bases must be a positive integer\n";
+        parsing_result = BAD;
+        return;
+    }
+
+    // Non-positive min_length doesn't make sense.
+    if (min_length_set && min_length <= 0) {
+        std::cerr << "Error: the value for --min_length must be a positive integer\n";
+        parsing_result = BAD;
+        return;
+    }
+
+    // keep_percent must be between 0 and 100 (exclusive).
+    if (keep_percent_set && (keep_percent <= 0.0 || keep_percent >= 100.0)) {
+        std::cerr << "Error: the value for --keep_percent must be greater than 0 and less than 100\n";
+        parsing_result = BAD;
+        return;
+    }
+
+    // min_mean_q and min_window_q must be positive.
+    if (min_mean_q_set && min_mean_q <= 0.0) {
+        std::cerr << "Error: the value for --min_mean_q must be greater than 0\n";
+        parsing_result = BAD;
+        return;
+    }
+    if (min_window_q_set && min_window_q <= 0.0) {
+        std::cerr << "Error: the value for --min_window_q must be greater than 0\n";
+        parsing_result = BAD;
+        return;
+    }
+
+    // Negative weights don't make sense.
+    if (length_weight < 0.0 || mean_q_weight < 0.0 || window_q_weight < 0.0) {
+        std::cerr << "Error: weight values cannot be negative\n";
+        parsing_result = BAD;
+        return;
+    }
+
+    // Non-positive split doesn't make sense.
+    if (split_set && split <= 0) {
+        std::cerr << "Error: the value for --split must be a positive integer\n";
+        parsing_result = BAD;
+        return;
+    }
+
+    // Non-positive window_size doesn't make sense.
+    if (window_size <= 0) {
+        std::cerr << "Error: the value for --window_size must be a positive integer\n";
+        parsing_result = BAD;
+        return;
+    }
 }
 
 

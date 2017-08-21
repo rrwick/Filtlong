@@ -37,9 +37,7 @@ def load_fastq(filename):
 
 
 class TestSplit(unittest.TestCase):
-    """
-    These tests verify the read trimming functionality.
-    """
+
     def run_command(self, command):
         binary_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bin', 'filtlong')
         input_path = os.path.join(os.path.dirname(__file__), 'test_split.fastq')
@@ -77,7 +75,7 @@ class TestSplit(unittest.TestCase):
         """
         When splitting is off, the reads aren't split.
         """
-        console_out = self.run_command('filtlong -a ASSEMBLY INPUT > OUTPUT.fastq')
+        console_out = self.run_command('filtlong --min_length 1 -a ASSEMBLY INPUT > OUTPUT.fastq')
         self.assertTrue('4 reads (11,600 bp)' in console_out)
         self.assertTrue('after splitting' not in console_out)
         split_reads = load_fastq(self.output_file)
