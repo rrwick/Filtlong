@@ -1,0 +1,8 @@
+These reads all come from the same sequence in the reference.
+
+test_sort_1: Phred scores around 10 (worst), exact match for reference (best)
+test_sort_2: Phred scores around 20 (best), error rate of about 3% (worst)
+test_sort_3: Phred scores around 15 (medium), error rate of about 1% (medium)
+
+Quality order by Phred:     2, 3, 1
+Quality order by reference: 1, 3, 2
