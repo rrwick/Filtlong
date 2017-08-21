@@ -247,10 +247,10 @@ int main(int argc, char **argv)
             // Fail all reads after the threshold has been met.
             long long bases_so_far = 0;
             for (auto read : reads2) {
-                if (bases_so_far > target_bases)
-                    read->m_passed = false;
-                else if (read->m_passed)
+                if (read->m_passed && bases_so_far < target_bases)
                     bases_so_far += read->m_length;
+                else
+                    read->m_passed = false;
             }
             std::cerr << "  keeping " << int_to_string(bases_so_far) << " bp\n";
         }
