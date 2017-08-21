@@ -29,7 +29,7 @@
 #include "kmers.h"
 #include "misc.h"
 
-#define PROGRAM_VERSION "0.1.0"
+#define PROGRAM_VERSION "0.1.1"
 
 KSEQ_INIT(gzFile, gzread)
 
