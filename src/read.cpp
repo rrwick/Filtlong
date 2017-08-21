@@ -222,7 +222,7 @@ double Read::get_window_quality(std::vector<double> & qualities, size_t window_s
     double min_window_quality = window_quality;
 
     for (size_t j = window_size; j < qualities.size(); ++j) {
-        int i = j - window_size;
+        size_t i = j - window_size;
         window_quality -= qualities[i] / window_size;
         window_quality += qualities[j] / window_size;
         if (window_quality < min_window_quality)
@@ -252,8 +252,10 @@ void Read::set_final_score(double length_weight, double mean_q_weight, double wi
     double final_score = pow(product, 1.0 / total_weight);
 
     // Now scale that down using the ratio of window quality to mean quality.
-    double scaling_factor = m_window_quality / m_mean_quality;
-    if (scaling_factor > 1.0)
+    double scaling_factor;
+    if (m_mean_quality > 0.0)
+        scaling_factor = std::min(m_window_quality / m_mean_quality, 1.0);
+    else
         scaling_factor = 1.0;
     total_weight = length_weight + mean_q_weight + window_q_weight;
     double window_weight_fraction = window_q_weight / total_weight;

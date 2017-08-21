@@ -106,7 +106,7 @@ int main(int argc, char **argv)
         else {
             total_bases += seq->seq.l;
             std::string read_name = seq->name.s;
-            Read * read = new Read(read_name, seq->seq.s, seq->qual.s, seq->seq.l, &kmers, &args);
+            Read * read = new Read(read_name, seq->seq.s, seq->qual.s, int(seq->seq.l), &kmers, &args);
             reads.push_back(read);
             if (args.verbose)
                 read->print_verbose_read_info();
