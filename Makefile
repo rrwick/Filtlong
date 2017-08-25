@@ -37,7 +37,7 @@ dir_guard=@mkdir -p $(@D)
 
 $(TARGET): $(OBJECTS)
 	$(dir_guard)
-	$(CXX) $(FLAGS) $(CXXFLAGS) $(LIB) -o $(TARGET) $(OBJECTS)
+	$(CXX) $(FLAGS) $(CXXFLAGS) -o $(TARGET) $(OBJECTS) $(LIB)
 
 clean:
 	$(RM) $(OBJECTS)
