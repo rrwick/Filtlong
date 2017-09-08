@@ -376,6 +376,10 @@ Trimming/splitting has turned a very long read with some bad regions into some s
   * It's a _footlong_ hot dog. Filtlong... footlong... get it?! Not all my Australian colleagues were familiar with footlong hot dogs, so maybe they are a US thing. Leave it to Americans to take a fatty, unhealthy food and make an extra large version :smile:
 * Why does Filtlong use a k-mer size of 16 when hashing reference k-mers?
   * Because I can fit a 16-mer sequence neatly into a 32-bit unsigned integer ([like this](https://github.com/rrwick/Filtlong/blob/ce99bc062bb1611f38deb5e7502cfb66b98598ae/src/kmers.cpp#L222-L229)). It also seemed like a good balance between small k-mers where there's more risk of chance matches and large k-mers where noisy long reads will struggle to match. I haven't empirically tested the effectiveness of different k-mer sizes though – might be good to check out for a future version of Filtlong.
+* Is it ever a _bad_ idea to use an external reference (like Illumina reads) if they are available?
+  * If you provide Filtlong with an external reference, then long read qualities will be determined solely based on their k-mer matches to the reference. This is great if your Illumina reads have complete coverage. However, if they have poor coverage (i.e. parts of the genome are not represented in the Illumina reads), then long reads which span the poor-Illumina-coverage part of the genome may be erroneously considered low-quality.
+  * Similarly, if there are genuine biological differences between your read sets, then the long reads may be erroneously considered low-quality in regions of difference. E.g. if your long read sample has a plasmid which isn't in your Illumina reads, then Filtlong could remove long reads from that plasmid.
+  * If you think either of these cases applies to you, I'd recommend _against_ using an external reference.
 
 
 ## Acknowledgements
