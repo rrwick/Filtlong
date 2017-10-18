@@ -388,7 +388,7 @@ I owe many thanks to [Kat Holt](https://holtlab.net/) and [Louise Judd](https://
 
 Filtlong makes use of some nice open source libraries – thank you to the developers:
 * [Klib](https://github.com/attractivechaos/klib/) for easy fastq parsing
-* [args](https://github.com/Taywee/args) for command-line argument parsing.
+* [args](https://github.com/Taywee/args) for command-line argument parsing
 * [C++ bloom filter library](https://github.com/ArashPartow/bloom) for some memory-saving in the k-mer counting
 
 Finally, credit for the great punny program name goes to my wife, Rosalind!
