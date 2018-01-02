@@ -70,9 +70,9 @@ These examples use a 1.3 Gbp read set that was part of a [barcoded 1D MinION run
             <img align="right" src="misc/example_commands_0_unfiltered.png" alt="unfiltered" width="400">
             Here is what the reads look like before Filtlong. Each dot is a read and the marginal histograms show the length distribution (top) and identity distribution (right).
             <br><br>
-            The length N50 is 24,088 bp (i.e. half the bases are in a read 24,088 bp long or longer).
+            The length N50 is 24,077 bp (i.e. half the bases are in a read 24,077 bp long or longer).
             <br>
-            The identity N50 is 85.61% (i.e. half the bases are in a read with 85.61% or higher identity).
+            The identity N50 is 85.60% (i.e. half the bases are in a read with 85.60% or higher identity).
         </td>
     </tr>
 </table>
@@ -147,9 +147,9 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
             <img align="right" src="misc/example_commands_3_trim_split.png" alt="trim_split" width="400">
             Trimming and splitting has further improved the read identity. This is especially apparent at the short side of the length distribution where a lot more reads now exceed 92% identity. Some of these high-identity shorter reads will be parts of longer reads which were split.
             <br><br>
-            Length N50 = 28,230 bp
+            Length N50 = 28,407 bp
             <br>
-            Identity N50 = 89.39%
+            Identity N50 = 89.37%
         </td>
     </tr>
 </table>
