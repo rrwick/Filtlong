@@ -56,7 +56,7 @@ filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fast
 ### With an external reference
 
 ```
-filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 250 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 500 input.fastq.gz | gzip > output.fastq.gz
 ```
 
 
@@ -135,11 +135,11 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 When an external reference is provided, you can turn on read trimming and splitting to further increase read quality. See [Trimming and splitting](#trimming-and-splitting) for more information.
 
 ```
-filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 250 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 500 input.fastq.gz | gzip > output.fastq.gz
 ```
 
 * `--trim` ← Trim bases from the start and end of reads which do not match a k-mer in the reference. This ensures the each read starts and ends with good sequence.
-* `--split 250` ← Split reads whenever 250 consequence bases fail to match a k-mer in the reference. This serves to remove very poor parts of reads while keeping the good parts. A lower value will split more aggressively and a higher value will be more conservative.
+* `--split 500` ← Split reads whenever 500 consequence bases fail to match a k-mer in the reference. This serves to remove very poor parts of reads while keeping the good parts. A lower value will split more aggressively and a higher value will be more conservative.
 
 <table>
     <tr>
@@ -325,7 +325,7 @@ Only the child read (not the original read) is now eligible for outputting. It's
 If Filtlong is run with `--trim --split 20`, then in addition to trimming the ends, any run of non-matching bases 20 or longer will be removed. Using the same example, this results in two separate child reads:
 <p align="center"><img src="misc/split_example_1.png" alt="Split example 1" width="100%"></p>
 
-These child reads are much shorter than the original read but are much higher quality. Note that a split setting of 20 was used for this toy example but is very low for a real run of Filtlong – it would be quite aggressive and result in reads being split into very many pieces. A value like 250 is more practical.
+These child reads are much shorter than the original read but are much higher quality. Note that a split setting of 20 was used for this toy example but is very low for a real run of Filtlong – it would be quite aggressive and result in reads being split into very many pieces. A value like 500 is more practical.
 
 For an extreme example, this is what you'd get if you used `--trim --split 1`:
 <p align="center"><img src="misc/split_example_2.png" alt="Split example 2" width="100%"></p>
@@ -343,7 +343,7 @@ bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template
             length = 117786     mean quality = 53.02      window quality =  0.00
 ```
 
-The read's bad ranges are the coordinates non-matching start/end regions (because of `--trim`) or runs of 250 or more non-matching bases (because of `--split 250`). The child ranges are the inverse, bases that aren't in the bad ranges:
+The read's bad ranges are the coordinates non-matching start/end regions (because of `--trim`) or runs of non-matching bases (because of `--split`). The child ranges are the inverse, bases that aren't in the bad ranges:
 ```
         bad ranges = 0-25, 71401-71745, 72393-72683, 72742-73049, 77279-77627, 78710-79055, 85575-85947, 86620-86877, 89397-89682, 91451-91782, 94415-94764, 96010-96306, 96604-96886, 98691-99176, 102349-102655, 102913-103286, 103488-103828, 106124-106397, 113277-113581, 117784-117786
       child ranges = 25-71401, 71745-72393, 72683-72742, 73049-77279, 77627-78710, 79055-85575, 85947-86620, 86877-89397, 89682-91451, 91782-94415, 94764-96010, 96306-96604, 96886-98691, 99176-102349, 102655-102913, 103286-103488, 103828-106124, 106397-113277, 113581-117784
