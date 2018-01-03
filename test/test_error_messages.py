@@ -24,12 +24,16 @@ class TestErrorMessages(unittest.TestCase):
     def run_command(self, command):
         binary_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bin', 'filtlong')
         input_path = os.path.join(os.path.dirname(__file__), 'test_sort.fastq')
+        input_fasta = os.path.join(os.path.dirname(__file__), 'test_fasta.fasta')
+        bad_fastq = os.path.join(os.path.dirname(__file__), 'test_bad_fastq.fastq')
         assembly_reference = os.path.join(os.path.dirname(__file__), 'test_reference.fasta')
         illumina_reference_1 = os.path.join(os.path.dirname(__file__), 'test_reference_1.fastq.gz')
         illumina_reference_2 = os.path.join(os.path.dirname(__file__), 'test_reference_2.fastq.gz')
 
         command = command.replace('filtlong', binary_path)
         command = command.replace('INPUT', input_path)
+        command = command.replace('FASTA', input_fasta)
+        command = command.replace('BADFASTQ', bad_fastq)
         command = command.replace('ASSEMBLY', assembly_reference)
         command = command.replace('ILLUMINA_1', illumina_reference_1)
         command = command.replace('ILLUMINA_2', illumina_reference_2)
@@ -157,4 +161,14 @@ class TestErrorMessages(unittest.TestCase):
     def test_window_size_too_low_2(self):
         console_out, return_code = self.run_command('filtlong --min_length 1000 --window_size -10 INPUT > OUTPUT.fastq')
         self.assertTrue('Error: the value for --window_size must be a positive integer' in console_out)
+        self.assertEqual(return_code, 1)
+
+    def test_fasta_input(self):
+        console_out, return_code = self.run_command('filtlong --target_bases 1000 FASTA > OUTPUT.fastq')
+        self.assertTrue('Error: FASTA input not supported' in console_out)
+        self.assertEqual(return_code, 1)
+
+    def test_bad_fastq(self):
+        console_out, return_code = self.run_command('filtlong --target_bases 1000 BADFASTQ > OUTPUT.fastq')
+        self.assertTrue('Error: incorrect FASTQ format for read' in console_out)
         self.assertEqual(return_code, 1)

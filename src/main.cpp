@@ -46,37 +46,6 @@ int main(int argc, char **argv)
         return 0;
     }
 
-//    // TEMP - check argument parsing
-//    std::cerr << "\n\n";
-//    std::cerr << "input_reads: " << args.input_reads << std::endl;
-//    if (args.target_bases_set) { std::cerr << "target_bases: " << args.target_bases << std::endl; }
-//    else { std::cerr << "target_bases: not set" << std::endl; }
-//    if (args.keep_percent_set) { std::cerr << "keep_percent: " << args.keep_percent << std::endl; }
-//    else { std::cerr << "keep_percent: not set" << std::endl; }
-//    if (args.assembly_set) { std::cerr << "assembly: " << args.assembly << std::endl; }
-//    else { std::cerr << "assembly: not set" << std::endl; }
-//    if (args.illumina_reads.size() > 0) {
-//        std::cerr << "illumina_reads: " << std::endl;
-//        for (auto i : args.illumina_reads)
-//            std::cerr << "    " << i << std::endl;
-//    }
-//    else { std::cerr << "illumina_reads: not set" << std::endl; }
-//    if (args.min_length_set) { std::cerr << "min_length: " << args.min_length << std::endl; }
-//    else { std::cerr << "min_length: not set" << std::endl; }
-//    if (args.min_mean_q_set) { std::cerr << "min_mean_q: " << args.min_mean_q << std::endl; }
-//    else { std::cerr << "min_mean_q: not set" << std::endl; }
-//    if (args.min_window_q_set) { std::cerr << "min_window_q: " << args.min_window_q << std::endl; }
-//    else { std::cerr << "min_window_q: not set" << std::endl; }
-//    std::cerr << "length_weight: " << args.length_weight << std::endl;
-//    std::cerr << "mean_q_weight: " << args.mean_q_weight << std::endl;
-//    std::cerr << "window_q_weight: " << args.window_q_weight << std::endl;
-//    std::cerr << "trim: " << args.trim << std::endl;
-//    if (args.split_set) { std::cerr << "split: " << args.split << std::endl; }
-//    else { std::cerr << "split: not set" << std::endl; }
-//    std::cerr << "window_size: " << args.window_size << std::endl;
-//    std::cerr << "verbose: " << args.verbose << std::endl;
-//    return 0;
-
     std::cerr << "\n";
 
     // Read through references and save 16-mers. For assembly references, this will save all 16-mers in the assembly.
@@ -100,12 +69,27 @@ int main(int argc, char **argv)
     int l;
     gzFile fp = gzopen(args.input_reads.c_str(), "r");
     kseq_t * seq = kseq_init(fp);
-    while ((l = kseq_read(seq)) >= 0) {
-        if (l == -3)
+    while (true) {
+        l = kseq_read(seq);
+        if (l == -1)  // end of file
+            break;
+        if (l == -2) {
+            std::cerr << "Error: incorrect FASTQ format for read " << seq->name.s << "\n";
+            return 1;
+        }
+        if (l == -3) {
             std::cerr << "Error reading " << args.input_reads << "\n";
+            return 1;
+        }
         else {
             total_bases += seq->seq.l;
             std::string read_name = seq->name.s;
+
+            if (seq->qual.l == 0 && seq->seq.l > 0) {
+                std::cerr << "Error: FASTA input not supported" << "\n";
+                return 1;
+            }
+
             Read * read = new Read(read_name, seq->seq.s, seq->qual.s, int(seq->seq.l), &kmers, &args);
             reads.push_back(read);
             if (args.verbose)
@@ -113,7 +97,7 @@ int main(int argc, char **argv)
 
             if (read_dict.find(read->m_name) != read_dict.end()) {
                 std::cerr << "Error: duplicate read name: " << read->m_name << "\n";
-                return 0;
+                return 1;
             }
             read_dict[read->m_name] = read;
 
