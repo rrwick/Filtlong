@@ -24,7 +24,7 @@ class TestErrorMessages(unittest.TestCase):
     def run_command(self, command):
         binary_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'bin', 'filtlong')
         input_path = os.path.join(os.path.dirname(__file__), 'test_sort.fastq')
-        input_fasta = os.path.join(os.path.dirname(__file__), 'test_fasta.fasta')
+        input_fasta = os.path.join(os.path.dirname(__file__), 'test_sort.fasta')
         bad_fastq = os.path.join(os.path.dirname(__file__), 'test_bad_fastq.fastq')
         assembly_reference = os.path.join(os.path.dirname(__file__), 'test_reference.fasta')
         illumina_reference_1 = os.path.join(os.path.dirname(__file__), 'test_reference_1.fastq.gz')
@@ -165,7 +165,7 @@ class TestErrorMessages(unittest.TestCase):
 
     def test_fasta_input(self):
         console_out, return_code = self.run_command('filtlong --target_bases 1000 FASTA > OUTPUT.fastq')
-        self.assertTrue('Error: FASTA input not supported' in console_out)
+        self.assertTrue('Error: FASTA input not supported without an external reference' in console_out)
         self.assertEqual(return_code, 1)
 
     def test_bad_fastq(self):
