@@ -296,9 +296,10 @@ int main(int argc, char **argv)
                         std::cout << "\n";
 
                         std::string seq_str = seq->seq.s;
-                        std::string qual_str = seq->qual.s;
                         std::cout << seq_str.substr(start, length) << "\n";
+
                         if (fastq_output) {
+                            std::string qual_str = seq->qual.s;
                             std::cout << "+\n";
                             std::cout << qual_str.substr(start, length) << "\n";
                         }
