@@ -262,6 +262,7 @@ When run, Filtlong carries out the following steps:
     * If the reference is in Illumina reads, then the 16-mer has to be encountered a few times before it's hashed (to avoid hashing 16-mers that result from read errors).
 2. Look at each of the input reads to get length and quality information.
     * If a read fails to meet any of the hard thresholds (`--min_length`, `--min_mean_q` or `--min_window_q`) then it is marked as 'fail' now.
+        * Note that `--min_mean_q` and `--min_window_q` are expressed as sequence percent identities from 0-100 (see how this is calculated in the [Read scoring](#read-scoring) section), not as PHRED scores.
     * If `--trim` or `--split` was used, then 'child' reads are made here (see [Trimming and splitting](#trimming-and-splitting)).
     * If `--verbose` was used, display detailed information about the read length, quality and trimming/splitting.
 3. Gather up all reads eligible for output. If neither `--trim` nor `--split` was used, this is simply the original set of reads. If `--trim` or `--split` was used, then the child reads replace the original reads.
