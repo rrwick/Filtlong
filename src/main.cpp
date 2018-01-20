@@ -94,9 +94,14 @@ int main(int argc, char **argv)
 
             any_fasta = (any_fasta || fasta_format);
             any_fastq = (any_fastq || fastq_format);
+            if (any_fasta && any_fastq) {
+                std::cerr << "\n\n" << "Error: could not parse input reads" << "\n";
+                std::cerr << "  problem occurred at read " << read_name << "\n";
+                return 1;
+            }
 
             if (fasta_format && kmers.empty()) {
-                std::cerr << "Error: FASTA input not supported without an external reference" << "\n";
+                std::cerr << "\n\n" << "Error: FASTA input not supported without an external reference" << "\n";
                 return 1;
             }
 
@@ -125,10 +130,6 @@ int main(int argc, char **argv)
     std::cerr << "\n";
 
     // Determine the output format.
-    if (any_fasta == any_fastq) {
-        std::cerr << "Error: could not determine input format" << "\n";
-        return 1;
-    }
     bool fasta_output = any_fasta;
     bool fastq_output = any_fastq;
 
