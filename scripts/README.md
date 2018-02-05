@@ -162,6 +162,8 @@ Each ∎ represents 512,055 bases
 Based on the histograms, I might choose the following conservative quality thresholds: `--min_length 5000 --min_mean_q 80 --min_window_q 65`
 
 
+<br><br><br>
+
 
 ## Example with Illumina reads as an external reference
 
