@@ -182,7 +182,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 
 ### Quality priority
 
-You can adjust the relative importance of Filtlong's read metrics. In this example, more weight is given to read length.
+You can adjust the relative importance of Filtlong's read metrics. In this example, more weight is given to read quality.
 
 ```
 filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 100 --mean_q_weight 10 input.fastq.gz | gzip > output.fastq.gz
