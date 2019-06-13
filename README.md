@@ -139,7 +139,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 ```
 
 * `--trim` ← Trim bases from the start and end of reads which do not match a k-mer in the reference. This ensures the each read starts and ends with good sequence.
-* `--split 500` ← Split reads whenever 500 consequence bases fail to match a k-mer in the reference. This serves to remove very poor parts of reads while keeping the good parts. A lower value will split more aggressively and a higher value will be more conservative.
+* `--split 500` ← Split reads whenever 500 consecutive bases fail to match a k-mer in the reference. This serves to remove very poor parts of reads while keeping the good parts. A lower value will split more aggressively and a higher value will be more conservative.
 
 <table>
     <tr>
