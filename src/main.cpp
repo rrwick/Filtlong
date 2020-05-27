@@ -67,64 +67,70 @@ int main(int argc, char **argv)
     if (!args.verbose)
         std::cerr << "Scoring long reads\n";
     int l;
-    gzFile fp = gzopen(args.input_reads.c_str(), "r");
-    kseq_t * seq = kseq_init(fp);
 
+    gzFile fp = 0;
+    kseq_t * seq = nullptr;
     bool any_fasta = false;
     bool any_fastq = false;
 
-    while (true) {
-        l = kseq_read(seq);
-        if (l == -1)  // end of file
-            break;
-        if (l == -2) {
-            std::cerr << "Error: incorrect FASTQ format for read " << seq->name.s << "\n";
-            return 1;
-        }
-        if (l == -3) {
-            std::cerr << "Error reading " << args.input_reads << "\n";
-            return 1;
-        }
-        else {
-            total_bases += seq->seq.l;
-            std::string read_name = seq->name.s;
+    for (auto & input_file : args.input_reads) {
 
-            bool fasta_format = (seq->qual.l == 0 && seq->seq.l > 0);
-            bool fastq_format = (seq->qual.l > 0 && seq->seq.l > 0 && seq->qual.l == seq->seq.l);
+        fp = gzopen(input_file.c_str(), "r");
+        seq = kseq_init(fp);
 
-            any_fasta = (any_fasta || fasta_format);
-            any_fastq = (any_fastq || fastq_format);
-            if (any_fasta && any_fastq) {
-                std::cerr << "\n\n" << "Error: could not parse input reads" << "\n";
-                std::cerr << "  problem occurred at read " << read_name << "\n";
+        while (true) {
+            l = kseq_read(seq);
+            if (l == -1)  // end of file
+                break;
+            if (l == -2) {
+                std::cerr << "Error: incorrect FASTQ format for read " << seq->name.s << "\n";
                 return 1;
             }
-
-            if (fasta_format && kmers.empty()) {
-                std::cerr << "\n\n" << "Error: FASTA input not supported without an external reference" << "\n";
+            if (l == -3) {
+                std::cerr << "Error reading " << input_file << "\n";
                 return 1;
             }
+            else {
+                total_bases += seq->seq.l;
+                std::string read_name = seq->name.s;
 
-            Read * read = new Read(read_name, seq->seq.s, seq->qual.s, int(seq->seq.l), &kmers, &args);
-            reads.push_back(read);
-            if (args.verbose)
-                read->print_verbose_read_info();
+                bool fasta_format = (seq->qual.l == 0 && seq->seq.l > 0);
+                bool fastq_format = (seq->qual.l > 0 && seq->seq.l > 0 && seq->qual.l == seq->seq.l);
 
-            if (read_dict.find(read->m_name) != read_dict.end()) {
-                std::cerr << "Error: duplicate read name: " << read->m_name << "\n";
-                return 1;
-            }
-            read_dict[read->m_name] = read;
+                any_fasta = (any_fasta || fasta_format);
+                any_fastq = (any_fastq || fastq_format);
+                if (any_fasta && any_fastq) {
+                    std::cerr << "\n\n" << "Error: could not parse input reads" << "\n";
+                    std::cerr << "  problem occurred at read " << read_name << "\n";
+                    return 1;
+                }
 
-            if (total_bases - last_progress >= 483611) {  // a big prime number so progress updates don't round off
-                last_progress = total_bases;
-                if (!args.verbose)
-                    print_read_score_progress(reads.size(), total_bases);
+                if (fasta_format && kmers.empty()) {
+                    std::cerr << "\n\n" << "Error: FASTA input not supported without an external reference" << "\n";
+                    return 1;
+                }
+
+                Read * read = new Read(read_name, seq->seq.s, seq->qual.s, int(seq->seq.l), &kmers, &args);
+                reads.push_back(read);
+                if (args.verbose)
+                    read->print_verbose_read_info();
+
+                if (read_dict.find(read->m_name) != read_dict.end()) {
+                    std::cerr << "Error: duplicate read name: " << read->m_name << "\n";
+                    return 1;
+                }
+                read_dict[read->m_name] = read;
+
+                if (total_bases - last_progress >= 483611) {  // a big prime number so progress updates don't round off
+                    last_progress = total_bases;
+                    if (!args.verbose)
+                        print_read_score_progress(reads.size(), total_bases);
+                }
             }
         }
+        kseq_destroy(seq);
+        gzclose(fp);
     }
-    kseq_destroy(seq);
-    gzclose(fp);
     if (!args.verbose)
         print_read_score_progress(reads.size(), total_bases);
     std::cerr << "\n";
@@ -262,55 +268,57 @@ int main(int argc, char **argv)
 
     // Read through input reads again, this time outputting the keepers to stdout and ignoring the failures.
     std::cerr << "Outputting passed long reads\n";
-    fp = gzopen(args.input_reads.c_str(), "r");
-    seq = kseq_init(fp);
-    while ((l = kseq_read(seq)) >= 0) {
-        Read * read = read_dict[seq->name.s];
-
-        if (read->m_child_reads.size() == 0) {
-            if (read->m_passed) {
-                std::cout << (fasta_output ? ">" : "@");
-                std::cout << seq->name.s;
-                if (seq->comment.l > 0)
-                    std::cout << " " << seq->comment.s;
-                std::cout << "\n";
-                std::cout << seq->seq.s << "\n";
-                if (fastq_output) {
-                    std::cout << "+\n";
-                    std::cout << seq->qual.s << "\n";
+    for (auto & input_file : args.input_reads) {
+        fp = gzopen(input_file.c_str(), "r");
+        seq = kseq_init(fp);
+        while ((l = kseq_read(seq)) >= 0) {
+            Read * read = read_dict[seq->name.s];
+    
+            if (read->m_child_reads.size() == 0) {
+                if (read->m_passed) {
+                    std::cout << (fasta_output ? ">" : "@");
+                    std::cout << seq->name.s;
+                    if (seq->comment.l > 0)
+                        std::cout << " " << seq->comment.s;
+                    std::cout << "\n";
+                    std::cout << seq->seq.s << "\n";
+                    if (fastq_output) {
+                        std::cout << "+\n";
+                        std::cout << seq->qual.s << "\n";
+                    }
                 }
             }
-        }
-        else {
-            for (size_t i = 0; i < read->m_child_reads.size(); ++i) {
-                Read * child_read = read->m_child_reads[i];
-                if (child_read->m_passed) {
-                    std::pair<int,int> child_read_range = read->m_child_read_ranges[i];
-                    int start = child_read_range.first;
-                    int end = child_read_range.second;
-                    int length = end - start;
-                    if (length > 0) {
-                        std::cout << (fasta_output ? ">" : "@");
-                        std::cout << child_read->m_name;
-                        if (seq->comment.l > 0)
-                            std::cout << " " << seq->comment.s;
-                        std::cout << "\n";
-
-                        std::string seq_str = seq->seq.s;
-                        std::cout << seq_str.substr(start, length) << "\n";
-
-                        if (fastq_output) {
-                            std::string qual_str = seq->qual.s;
-                            std::cout << "+\n";
-                            std::cout << qual_str.substr(start, length) << "\n";
+            else {
+                for (size_t i = 0; i < read->m_child_reads.size(); ++i) {
+                    Read * child_read = read->m_child_reads[i];
+                    if (child_read->m_passed) {
+                        std::pair<int,int> child_read_range = read->m_child_read_ranges[i];
+                        int start = child_read_range.first;
+                        int end = child_read_range.second;
+                        int length = end - start;
+                        if (length > 0) {
+                            std::cout << (fasta_output ? ">" : "@");
+                            std::cout << child_read->m_name;
+                            if (seq->comment.l > 0)
+                                std::cout << " " << seq->comment.s;
+                            std::cout << "\n";
+    
+                            std::string seq_str = seq->seq.s;
+                            std::cout << seq_str.substr(start, length) << "\n";
+    
+                            if (fastq_output) {
+                                std::string qual_str = seq->qual.s;
+                                std::cout << "+\n";
+                                std::cout << qual_str.substr(start, length) << "\n";
+                            }
                         }
                     }
                 }
             }
         }
+        kseq_destroy(seq);
+        gzclose(fp);
     }
-    kseq_destroy(seq);
-    gzclose(fp);
 
     // Clean up.
     for (auto read : reads)
