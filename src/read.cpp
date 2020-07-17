@@ -65,6 +65,8 @@ Read::Read(std::string name, char * seq, char * qscores, int length, Kmers * kme
     m_passed = true;
     if (args->min_length_set && m_length < args->min_length)
         m_passed = false;
+		else if (args->max_length_set && m_length > args->max_length)
+        m_passed = false;
     else if (args->min_mean_q_set && m_mean_quality < args->min_mean_q)
         m_passed = false;
     else if (args->min_window_q_set && m_window_quality < args->min_window_q)
