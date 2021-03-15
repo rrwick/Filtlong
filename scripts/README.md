@@ -1,6 +1,6 @@
 # Filtlong supplementary scripts
 
-This directory contains a script (`read_info_histograms.sh`) to assist with visualising read statistics. It uses a slightly modified version of the `histogram.py` file from the [data_hacks repo](https://github.com/bitly/data_hacks). It 
+This directory contains a script (`read_info_histograms.sh`) to assist with visualising read statistics. It uses a slightly modified version of the `histogram.py` file from the [data_hacks repo](https://github.com/bitly/data_hacks).
 
 Importantly, this script uses Filtlong to generate the data for its histograms. That means the quality values visualised are the same ones that Filtlong will use for filtering. If you are planning to use Filtlong with Illumina reads as an external reference, run this script with Illumina reads as well, so the quality scores are consistent.
 
