@@ -263,7 +263,7 @@ When run, Filtlong carries out the following steps:
 2. Look at each of the input reads to get length and quality information.
     * If a read fails to meet any of the hard thresholds (`--min_length`, `--min_mean_q` or `--min_window_q`) then it is marked as 'fail' now.
         * Note that `--min_mean_q` and `--min_window_q` are expressed as sequence percent identities from 0-100 (see how this is calculated in the [Read scoring](#read-scoring) section), not as PHRED scores.
-        * For advice on setting minimum quality thresholds, see [Filtlong's scripts directory](https://github.com/rrwick/Filtlong/tree/master/scripts).
+        * For advice on setting minimum quality thresholds, see [Filtlong's scripts directory](https://github.com/rrwick/Filtlong/tree/main/scripts).
     * If `--trim` or `--split` was used, then 'child' reads are made here (see [Trimming and splitting](#trimming-and-splitting)).
     * If `--verbose` was used, display detailed information about the read length, quality and trimming/splitting.
 3. Gather up all reads eligible for output. If neither `--trim` nor `--split` was used, this is simply the original set of reads. If `--trim` or `--split` was used, then the child reads replace the original reads.
