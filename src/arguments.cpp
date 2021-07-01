@@ -88,6 +88,9 @@ Arguments::Arguments(int argc, char **argv) {
     i_arg min_length_arg(thresholds_group, "int",
                          "minimum length threshold",
                          {"min_length"});
+    i_arg max_length_arg(thresholds_group, "int",
+                         "maximum length threshold",
+                         {"max_length"});
     d_arg min_mean_q_arg(thresholds_group, "float",
                          "minimum mean quality threshold",
                          {"min_mean_q"});
@@ -198,6 +201,9 @@ Arguments::Arguments(int argc, char **argv) {
     min_length_set = bool(min_length_arg);
     min_length = args::get(min_length_arg);
 
+    max_length_set = bool(max_length_arg);
+    max_length = args::get(max_length_arg);
+
     min_mean_q_set = bool(min_mean_q_arg);
     min_mean_q = args::get(min_mean_q_arg);
 
@@ -245,9 +251,9 @@ Arguments::Arguments(int argc, char **argv) {
 
     // If nothing is set, then Filtlong won't do anything. Give an error message and quit.
     if (!trim && !split_set && !target_bases_set && !keep_percent_set &&
-            !min_length_set && !min_mean_q_set && !min_window_q_set) {
+            !min_length_set && !max_length_set && !min_mean_q_set && !min_window_q_set) {
         std::cerr << "Error: no thresholds set, you must use one of the following options:\n";
-        std::cerr << "target_bases, keep_percent, min_length, min_mean_q, min_window_q, trim, split\n";
+        std::cerr << "target_bases, keep_percent, min_length, max_length, min_mean_q, min_window_q, trim, split\n";
         parsing_result = BAD;
         return;
     }
@@ -262,6 +268,13 @@ Arguments::Arguments(int argc, char **argv) {
     // Non-positive min_length doesn't make sense.
     if (min_length_set && min_length <= 0) {
         std::cerr << "Error: the value for --min_length must be a positive integer\n";
+        parsing_result = BAD;
+        return;
+    }
+ 
+    // Non-positive max_length doesn't make sense.
+    if (max_length_set && max_length <= 0) {
+        std::cerr << "Error: the value for --max_length must be a positive integer\n";
         parsing_result = BAD;
         return;
     }

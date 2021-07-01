@@ -42,6 +42,9 @@ public:
     bool min_length_set;
     int min_length;
 
+    bool max_length_set;
+    int max_length;
+
     bool min_mean_q_set;
     double min_mean_q;
 
