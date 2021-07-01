@@ -109,7 +109,7 @@ filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fast
 
 ### With Illumina read reference
 
-When an external reference is provided, Filtlong ignores the Phred quality scores and instead judges read quality using k-mer matches to the reference (a more accurate gauge of quality). FASTA input reads are allowed when a reference is provided, and if used Filtlong will produce FASTA output.
+When an external reference is provided, Filtlong ignores the Phred quality scores and instead judges read quality using k-mer matches to the reference (a more accurate gauge of quality). FASTA input reads are allowed when a reference is provided, and if used, Filtlong will produce FASTA output.
 
 ```
 filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fastq.gz | gzip > output.fastq.gz
@@ -129,6 +129,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
         </td>
     </tr>
 </table>
+
 
 ### With trimming and splitting
 
@@ -222,6 +223,7 @@ optional arguments:
       -p[float], --keep_percent [float]    keep only this percentage of the best reads (measured by
                                            bases)
       --min_length [int]                   minimum length threshold
+      --max_length [int]                   maximum length threshold
       --min_mean_q [float]                 minimum mean quality threshold
       --min_window_q [float]               minimum window quality threshold
 
@@ -261,7 +263,7 @@ When run, Filtlong carries out the following steps:
     * If the reference is an assembly, then Filtlong simply hashes all 16-mers in the assembly.
     * If the reference is in Illumina reads, then the 16-mer has to be encountered a few times before it's hashed (to avoid hashing 16-mers that result from read errors).
 2. Look at each of the input reads to get length and quality information.
-    * If a read fails to meet any of the hard thresholds (`--min_length`, `--min_mean_q` or `--min_window_q`) then it is marked as 'fail' now.
+    * If a read fails to meet any of the hard thresholds (`--min_length`, `--max_length`, `--min_mean_q` or `--min_window_q`) then it is marked as 'fail' now.
         * Note that `--min_mean_q` and `--min_window_q` are expressed as sequence percent identities from 0-100 (see how this is calculated in the [Read scoring](#read-scoring) section), not as PHRED scores.
         * For advice on setting minimum quality thresholds, see [Filtlong's scripts directory](https://github.com/rrwick/Filtlong/tree/main/scripts).
     * If `--trim` or `--split` was used, then 'child' reads are made here (see [Trimming and splitting](#trimming-and-splitting)).
