@@ -1,4 +1,4 @@
-<p align="center"><img src="misc/filtlong_logo.png" alt="Filtlong" width="450"></p>
+<p align="center"><img src="misc/filtlong_logo_transparent.png" alt="Filtlong" width="450"></p>
 
 Filtlong is a tool for filtering long reads by quality. It can take a set of long reads and produce a smaller, better subset. It uses both read length (longer is better) and read identity (higher is better) when choosing which reads pass the filter.
 
@@ -109,7 +109,9 @@ filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fast
 
 ### With Illumina read reference
 
-When an external reference is provided, Filtlong ignores the Phred quality scores and instead judges read quality using k-mer matches to the reference (a more accurate gauge of quality). FASTA input reads are allowed when a reference is provided, and if used, Filtlong will produce FASTA output.
+When an external reference is provided, Filtlong ignores the Phred quality scores and instead judges read quality using _k_-mer matches to the reference (a more accurate gauge of quality). FASTA input reads are allowed when a reference is provided, and if used, Filtlong will produce FASTA output.
+
+**NOTE**: I would only recommend using Illumina reads with Filtlong if they are _good_ Illumina reads (high depth and complete coverage). See the [FAQ section](#faq) for more info.
 
 ```
 filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fastq.gz | gzip > output.fastq.gz
@@ -139,8 +141,8 @@ When an external reference is provided, you can turn on read trimming and splitt
 filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 500 input.fastq.gz | gzip > output.fastq.gz
 ```
 
-* `--trim` ← Trim bases from the start and end of reads which do not match a k-mer in the reference. This ensures the each read starts and ends with good sequence.
-* `--split 500` ← Split reads whenever 500 consecutive bases fail to match a k-mer in the reference. This serves to remove very poor parts of reads while keeping the good parts. A lower value will split more aggressively and a higher value will be more conservative.
+* `--trim` ← Trim bases from the start and end of reads which do not match a _k_-mer in the reference. This ensures the each read starts and ends with good sequence.
+* `--split 500` ← Split reads whenever 500 consecutive bases fail to match a _k_-mer in the reference. This serves to remove very poor parts of reads while keeping the good parts. A lower value will split more aggressively and a higher value will be more conservative.
 
 <table>
     <tr>
@@ -377,15 +379,15 @@ Trimming/splitting has turned a very long read with some bad regions into some s
 ## FAQ
 
 * __Why is the logo a hot dog?__
-  * It's a _footlong_ hot dog. Filtlong... footlong... get it?! Not all my Australian colleagues were familiar with footlong hot dogs, so maybe they are a US thing. Leave it to Americans to take a fatty, unhealthy food and make an extra large version :smile:
-* __Why does Filtlong use a k-mer size of 16 when hashing reference k-mers?__
-  * Because I can fit a 16-mer sequence neatly into a 32-bit unsigned integer ([like this](https://github.com/rrwick/Filtlong/blob/ce99bc062bb1611f38deb5e7502cfb66b98598ae/src/kmers.cpp#L222-L229)). It also seemed like a good balance between small k-mers where there's more risk of chance matches and large k-mers where noisy long reads will struggle to match. I haven't empirically tested the effectiveness of different k-mer sizes though – might be good to check out for a future version of Filtlong.
+  * It's a _footlong_ hot dog. Filtlong... footlong... get it?! Not all my Australian colleagues were familiar with footlong hot dogs, so maybe they are a US thing. Leave it to Americans to take an unhealthy food and make an extra large version :smile:
+* __Why does Filtlong use a _k_-mer size of 16 when hashing reference _k_-mers?__
+  * Because I can fit a 16-mer sequence neatly into a 32-bit unsigned integer ([like this](https://github.com/rrwick/Filtlong/blob/ce99bc062bb1611f38deb5e7502cfb66b98598ae/src/kmers.cpp#L222-L229)). It also seemed like a good balance between small _k_-mers where there's more risk of chance matches and large _k_-mers where noisy long reads will struggle to match. I haven't empirically tested the effectiveness of different _k_-mer sizes though – might be good to check out for a future version of Filtlong.
 * __Is it ever a _bad_ idea to use an external reference (like Illumina reads)?__
-  * If you provide Filtlong with an external reference, then long read qualities will be determined solely based on their k-mer matches to the reference. This is great if your Illumina reads have complete coverage. However, if they have poor coverage (i.e. parts of the genome are not represented in the Illumina reads), then long reads which span the poor-Illumina-coverage part of the genome may be erroneously considered low-quality.
+  * If you provide Filtlong with an external reference, then long read qualities will be determined solely based on their _k_-mer matches to the reference. This is great if your Illumina reads have complete coverage. However, if they have poor coverage (i.e. parts of the genome are not represented in the Illumina reads), then long reads which span the poor-Illumina-coverage part of the genome may be erroneously considered low-quality.
   * Similarly, if there are genuine biological differences between your read sets, then the long reads may be erroneously considered low-quality in regions of difference. E.g. if your long read sample has a plasmid which isn't in your Illumina reads, then Filtlong could remove long reads from that plasmid.
   * If you think either of these cases applies to you, I'd recommend _against_ using an external reference.
 * __Are FASTA inputs allowed?__
-  * Yes, but only if you use an external reference (with the `-a` or `-1`/`-2` options). This is because Filtlong needs to assess read quality, and a FASTA file contains no quality information. If you use a FASTA input, Filtlong will produce a FASTA output.
+  * Yes, but only if you use an external reference (with the `-a` or `-1`/`-2` options). This is because Filtlong needs to assess read quality, and FASTA reads contain no quality information. If you use a FASTA input, Filtlong will produce a FASTA output.
 
 
 ## Acknowledgements
@@ -395,9 +397,7 @@ I owe many thanks to [Kat Holt](https://holtlab.net/) and [Louise Judd](https://
 Filtlong makes use of some nice open source libraries – thank you to the developers:
 * [Klib](https://github.com/attractivechaos/klib/) for easy fasta/fastq parsing
 * [args](https://github.com/Taywee/args) for command-line argument parsing
-* [C++ bloom filter library](https://github.com/ArashPartow/bloom) for some memory-saving in the k-mer counting
-
-Finally, credit for the great punny program name goes to my wife, Rosalind!
+* [C++ bloom filter library](https://github.com/ArashPartow/bloom) for some memory-saving in the _k_-mer counting
 
 
 ## License
