@@ -75,8 +75,8 @@ Arguments::Arguments(int argc, char **argv) {
     parser.helpParams.flagindent = indent_size;
     parser.helpParams.eachgroupindent = indent_size;
 
-    args::Positional<std::string> input_reads_arg(parser, "input_reads",
-                                      "input long reads to be filtered");
+    args::PositionalList<std::string> input_reads_arg(parser, "input_reads",
+                                                      "input long reads to be filtered (one or more files)");
 
     args::Group thresholds_group(parser, "output thresholds:");
     i_arg target_bases_arg(thresholds_group, "int",
@@ -235,8 +235,7 @@ Arguments::Arguments(int argc, char **argv) {
     }
 
     // Check to make sure files exist.
-    std::vector<std::string> files;
-    files.push_back(input_reads);
+    std::vector<std::string> files(input_reads);
     for (auto f : illumina_reads)
         files.push_back(f);
     if (assembly_set)

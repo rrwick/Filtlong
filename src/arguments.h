@@ -31,7 +31,7 @@ public:
 
     ParsingResult parsing_result;
 
-    std::string input_reads;
+    std::vector<std::string> input_reads;
 
     bool target_bases_set;
     long long target_bases;

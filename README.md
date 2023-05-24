@@ -6,17 +6,28 @@ Filtlong is a tool for filtering long reads by quality. It can take a set of lon
 
 ## Table of contents
 
-* [Requirements](#requirements)
-* [Installation](#installation)
-* [Example commands (quick)](#example-commands-quick)
-* [Example commands (detailed)](#example-commands-detailed)
-* [Full usage](#full-usage)
-* [Method](#method)
-* [Read scoring](#read-scoring)
-* [Trimming and splitting](#trimming-and-splitting)
-* [FAQ](#faq)
-* [Acknowledgements](#acknowledgements)
-* [License](#license)
+- [Table of contents](#table-of-contents)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Example commands (quick)](#example-commands-quick)
+  - [Without an external reference](#without-an-external-reference)
+  - [With an external reference](#with-an-external-reference)
+- [Example commands (detailed)](#example-commands-detailed)
+  - [Without an external reference](#without-an-external-reference-1)
+  - [With Illumina read reference](#with-illumina-read-reference)
+  - [With trimming and splitting](#with-trimming-and-splitting)
+  - [Length priority](#length-priority)
+  - [Quality priority](#quality-priority)
+- [Full usage](#full-usage)
+- [Method](#method)
+- [Read scoring](#read-scoring)
+- [Trimming and splitting](#trimming-and-splitting)
+  - [Trim example](#trim-example)
+  - [Split example](#split-example)
+  - [Real read example](#real-read-example)
+- [FAQ](#faq)
+- [Acknowledgements](#acknowledgements)
+- [License](#license)
 
 
 
@@ -212,12 +223,12 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 ## Full usage
 
 ```
-usage: filtlong {OPTIONS} [input_reads]
+usage: filtlong {OPTIONS} [input_reads...]
 
 Filtlong: a quality filtering tool for Nanopore and PacBio reads
 
 positional arguments:
-   input_reads                          input long reads to be filtered
+   input_reads...                       input long reads to be filtered (one or more files)
 
 optional arguments:
    output thresholds:
