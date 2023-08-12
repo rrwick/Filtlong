@@ -17,6 +17,7 @@
 #define KMERS_H
 
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <unordered_set>
