@@ -1,0 +1,1 @@
+filtlong --target_bases 458644252 input_reads.fastq > filtered_reads.fastq
