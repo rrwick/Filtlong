@@ -1,4 +1,4 @@
-<p align="center"><img src="misc/filtlong_logo_transparent.png" alt="Filtlong" width="450"></p>
+<p align="center"><picture><source srcset="misc/filtlong_logo-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/filtlong_logo_transparent.png" alt="Filtlong" width="450"></picture></p>
 
 Filtlong is a tool for filtering long reads by quality. It can take a set of long reads and produce a smaller, better subset. It uses both read length (longer is better) and read identity (higher is better) when choosing which reads pass the filter.
 
@@ -67,7 +67,7 @@ These examples use a 1.3 Gbp read set that was part of a [barcoded 1D MinION run
 <table>
     <tr>
         <td>
-            <img align="right" src="misc/example_commands_0_unfiltered.png" alt="unfiltered" width="400">
+            <p align="right"><picture><source srcset="misc/example_commands_0_unfiltered-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/example_commands_0_unfiltered.png" alt="unfiltered" width="400"></picture></p>
             Here is what the reads look like before Filtlong. Each dot is a read and the marginal histograms show the length distribution (top) and identity distribution (right).
             <br><br>
             The length N50 is 24,077 bp (i.e. half the bases are in a read 24,077 bp long or longer).
@@ -96,7 +96,7 @@ filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fast
 <table>
     <tr>
         <td>
-            <img align="right" src="misc/example_commands_1_without_reference.png" alt="without_reference" width="400">
+            <p align="right"><picture><source srcset="misc/example_commands_1_without_reference-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/example_commands_1_without_reference.png" alt="without_reference" width="400"></picture></p>
             Filtlong has cut the original 1.3 Gbp of reads down to a much better 500 Mbp subset. Short reads and low identity reads have been mostly removed.
             <br><br>
             Length N50 = 36,827 bp
@@ -122,7 +122,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 <table>
     <tr>
         <td>
-            <img align="right" src="misc/example_commands_2_with_reference.png" alt="with_reference" width="400">
+            <p align="right"><picture><source srcset="misc/example_commands_2_with_reference-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/example_commands_2_with_reference.png" alt="with_reference" width="400"></picture></p>
             With an external reference, Filtlong is better able to judge read quality, and now most remaining reads are 85% identity or better. The length distribution has suffered a bit, however, because when outputting a fixed amount of reads (500 Mbp in this case), there is a trade-off between length and quality.
             <br><br>
             Length N50 = 28,713 bp
@@ -147,7 +147,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 <table>
     <tr>
         <td>
-            <img align="right" src="misc/example_commands_3_trim_split.png" alt="trim_split" width="400">
+            <p align="right"><picture><source srcset="misc/example_commands_3_trim_split-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/example_commands_3_trim_split.png" alt="trim_split" width="400"></picture></p>
             Trimming and splitting has further improved the read identity. This is especially apparent at the short side of the length distribution where a lot more reads now exceed 92% identity. Some of these high-identity shorter reads will be parts of longer reads which were split.
             <br><br>
             Length N50 = 28,407 bp
@@ -172,7 +172,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 <table>
     <tr>
         <td>
-            <img align="right" src="misc/example_commands_4_length_priority.png" alt="length_priority" width="400">
+            <p align="right"><picture><source srcset="misc/example_commands_4_length_priority-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/example_commands_4_length_priority.png" alt="length_priority" width="400"></picture></p>
             These settings greatly improve the length distribution, but the length-quality trade-off results in more low-identity reads.
             <br><br>
             Length N50 = 43,877 bp
@@ -197,7 +197,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 <table>
     <tr>
         <td>
-            <img align="right" src="misc/example_commands_5_quality_priority.png" alt="length_priority" width="400">
+            <p align="right"><picture><source srcset="misc/example_commands_5_quality_priority-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/example_commands_5_quality_priority.png" alt="length_priority" width="400"></picture></p>
             These settings produce the best identity distribution, with most reads now 87% identity or better. Length now has a relatively lower weight in the score function, so many shorter reads are kept.
             <br><br>
             Length N50 = 14,127 bp
@@ -304,7 +304,7 @@ The read's final score is a combination of the three component scores:
 * Filtlong first takes the weighted geometric mean of the length score and the mean quality score. The weights are equal (both 1) by default, but you can adjust this with `--length_weight` and `--mean_q_weight` to make one or the other more important.
 * The score is then scaled down by a factor based on the window quality score to mean quality score ratio. This factor is adjusted by the relative strength of the window quality weight (`--window_q_weight`).
 * Expressed mathematically:
-<p align="center"><img src="misc/score_equation.png" alt="score equation" width="500"></p>
+<p align="center"><picture><source srcset="misc/score_equation-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/score_equation.png" alt="score" width="500"></picture></p>
 
 The final score which is used to determine thresholds for the `--keep_percent` and `--target_bases` options and therefore determines whether a read is included in the output.
 
@@ -318,10 +318,10 @@ If `--trim` or `--split` are used, then each read can result in one or more 'chi
 ### Trim example
 
 Consider the following example read. Bases which match a 16-mer to the reference are bold:
-<p align="center"><img src="misc/trim_example_1.png" alt="Trim example 1" width="100%"></p>
+<p align="center"><picture><source srcset="misc/trim_example_1-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/trim_example_1.png" alt="Trim example 1" width="100%"></picture></p>
 
 If Filtlong is run with `--trim`, any non-matching bases at the start and end are removed to produce this child read:
-<p align="center"><img src="misc/trim_example_2.png" alt="Trim example 2" width="100%"></p>
+<p align="center"><picture><source srcset="misc/trim_example_2-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/trim_example_2.png" alt="Trim example 2" width="100%"></picture></p>
 
 Only the child read (not the original read) is now eligible for outputting. It's a bit shorter than the original read, but its mean quality will be better.
 
@@ -329,12 +329,12 @@ Only the child read (not the original read) is now eligible for outputting. It's
 ### Split example
 
 If Filtlong is run with `--trim --split 20`, then in addition to trimming the ends, any run of non-matching bases 20 or longer will be removed. Using the same example, this results in two separate child reads:
-<p align="center"><img src="misc/split_example_1.png" alt="Split example 1" width="100%"></p>
+<p align="center"><picture><source srcset="misc/split_example_2-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/split_example_2.png" alt="Split example 1" width="100%"></picture></p>
 
 These child reads are much shorter than the original read but are much higher quality. Note that a split setting of 20 was used for this toy example but is very low for a real run of Filtlong – it would be quite aggressive and result in reads being split into very many pieces. A value like 500 is more practical.
 
 For an extreme example, this is what you'd get if you used `--trim --split 1`:
-<p align="center"><img src="misc/split_example_2.png" alt="Split example 2" width="100%"></p>
+<p align="center"><picture><source srcset="misc/split_example_2-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/split_example_2.png" alt="Split example 2" width="100%"></picture></p>
 
 Now _any_ run of non-matching bases is removed, regardless of length. The read is split into 3 child reads, each with perfect quality. Again, such a low setting would probably not be practical for a real read set.
 
@@ -371,7 +371,7 @@ bf09f0e9-d27d-4a18-bced-f2536b62b3e5_Basecall_Alignment_template_73050-77279
 ```
 
 And here is the read visualised with child ranges in blue and bad ranges in red (values are length in kbp):
-<p align="center"><img src="misc/trim_split_example_real_read.png" alt="Real read trim split" width="100%"></p>
+<p align="center"><picture><source srcset="misc/trim_split_example_real_read-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/trim_split_example_real_read.png" alt="Real read trim split" width="100%"></picture></p>
 
 Trimming/splitting has turned a very long read with some bad regions into some smaller reads (one of which is still quite long) without bad regions. Depending on the output thresholds (like `--min_length` and `--keep_percent`) many of the smaller child reads may fail and won't be outputted, leaving us with just the longest child reads.
 
