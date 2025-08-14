@@ -67,7 +67,7 @@ These examples use a 1.3 Gbp read set that was part of a [barcoded 1D MinION run
 <table>
     <tr>
         <td>
-            <p align="right"><picture><source srcset="misc/example_commands_0_unfiltered-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/example_commands_0_unfiltered.png" alt="unfiltered" width="400"></picture></p>
+            <picture><source srcset="misc/example_commands_0_unfiltered-dark.png" media="(prefers-color-scheme: dark)"><img align="right" src="misc/example_commands_0_unfiltered.png" alt="unfiltered" width="400"></picture>
             Here is what the reads look like before Filtlong. Each dot is a read and the marginal histograms show the length distribution (top) and identity distribution (right).
             <br><br>
             The length N50 is 24,077 bp (i.e. half the bases are in a read 24,077 bp long or longer).
@@ -76,7 +76,6 @@ These examples use a 1.3 Gbp read set that was part of a [barcoded 1D MinION run
         </td>
     </tr>
 </table>
-
 
 
 ### Without an external reference
@@ -96,7 +95,7 @@ filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fast
 <table>
     <tr>
         <td>
-            <p align="right"><picture><source srcset="misc/example_commands_1_without_reference-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/example_commands_1_without_reference.png" alt="without_reference" width="400"></picture></p>
+            <picture><source srcset="misc/example_commands_1_without_reference-dark.png" media="(prefers-color-scheme: dark)"><img align="right" src="misc/example_commands_1_without_reference.png" alt="without_reference" width="400"></picture>
             Filtlong has cut the original 1.3 Gbp of reads down to a much better 500 Mbp subset. Short reads and low identity reads have been mostly removed.
             <br><br>
             Length N50 = 36,827 bp
@@ -122,7 +121,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 <table>
     <tr>
         <td>
-            <p align="right"><picture><source srcset="misc/example_commands_2_with_reference-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/example_commands_2_with_reference.png" alt="with_reference" width="400"></picture></p>
+            <picture><source srcset="misc/example_commands_2_with_reference-dark.png" media="(prefers-color-scheme: dark)"><img align="right" src="misc/example_commands_2_with_reference.png" alt="with_reference" width="400"></picture>
             With an external reference, Filtlong is better able to judge read quality, and now most remaining reads are 85% identity or better. The length distribution has suffered a bit, however, because when outputting a fixed amount of reads (500 Mbp in this case), there is a trade-off between length and quality.
             <br><br>
             Length N50 = 28,713 bp
@@ -147,7 +146,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 <table>
     <tr>
         <td>
-            <p align="right"><picture><source srcset="misc/example_commands_3_trim_split-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/example_commands_3_trim_split.png" alt="trim_split" width="400"></picture></p>
+            <picture><source srcset="misc/example_commands_3_trim_split-dark.png" media="(prefers-color-scheme: dark)"><img align="right" src="misc/example_commands_3_trim_split.png" alt="trim_split" width="400"></picture>
             Trimming and splitting has further improved the read identity. This is especially apparent at the short side of the length distribution where a lot more reads now exceed 92% identity. Some of these high-identity shorter reads will be parts of longer reads which were split.
             <br><br>
             Length N50 = 28,407 bp
@@ -172,7 +171,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 <table>
     <tr>
         <td>
-            <p align="right"><picture><source srcset="misc/example_commands_4_length_priority-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/example_commands_4_length_priority.png" alt="length_priority" width="400"></picture></p>
+            <picture><source srcset="misc/example_commands_4_length_priority-dark.png" media="(prefers-color-scheme: dark)"><img align="right" src="misc/example_commands_4_length_priority.png" alt="length_priority" width="400"></picture>
             These settings greatly improve the length distribution, but the length-quality trade-off results in more low-identity reads.
             <br><br>
             Length N50 = 43,877 bp
@@ -197,7 +196,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 <table>
     <tr>
         <td>
-            <p align="right"><picture><source srcset="misc/example_commands_5_quality_priority-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/example_commands_5_quality_priority.png" alt="length_priority" width="400"></picture></p>
+            <picture><source srcset="misc/example_commands_5_quality_priority-dark.png" media="(prefers-color-scheme: dark)"><img align="right" src="misc/example_commands_5_quality_priority.png" alt="length_priority" width="400"></picture>
             These settings produce the best identity distribution, with most reads now 87% identity or better. Length now has a relatively lower weight in the score function, so many shorter reads are kept.
             <br><br>
             Length N50 = 14,127 bp
