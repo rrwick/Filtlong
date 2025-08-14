@@ -48,7 +48,7 @@ Kmers::~Kmers() {
 
 
 void Kmers::add_read_fastqs(std::vector<std::string> filenames) {
-    std::cerr << "Hashing 16-mers from Illumina reads\n";
+    std::cerr << "Hashing 16-mers from short reads\n";
 
     int sequence_count = 0;
     for (auto & filename : filenames)

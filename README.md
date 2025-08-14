@@ -56,8 +56,11 @@ filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fast
 ### With an external reference
 
 ```
-filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 500 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 500 input.fastq.gz | gzip > output.fastq.gz
 ```
+
+Note: as explained in the [FAQ section](#faq), I recommend _against_ using short reads as an external reference unless you are very confident in the quality of your short-read set.
+
 
 
 ## Example commands (detailed)
@@ -106,17 +109,17 @@ filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fast
 </table>
 
 
-### With Illumina read reference
+### With short read reference
 
 When an external reference is provided, Filtlong ignores the Phred quality scores and instead judges read quality using _k_-mer matches to the reference (a more accurate gauge of quality). FASTA input reads are allowed when a reference is provided, and if used, Filtlong will produce FASTA output.
 
-**NOTE**: I would only recommend using Illumina reads with Filtlong if they are _good_ Illumina reads (high depth and complete coverage). See the [FAQ section](#faq) for more info.
+**NOTE**: I would only recommend using short reads with Filtlong if they are _good_ short reads (high depth and complete coverage). See the [FAQ section](#faq) for more info.
 
 ```
-filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fastq.gz | gzip > output.fastq.gz
 ```
 
-* `-1 illumina_1.fastq.gz -2 illumina_2.fastq.gz` ← Use Illumina reads as an external reference. You can instead use `-a` to provide an assembly as a reference, but Illumina reads are preferable if available.
+* `-1 short_1.fastq.gz -2 short_2.fastq.gz` ← Use short reads as an external reference. You can instead use `-a` to provide an assembly as a reference, but reads are preferable if available.
 
 <table>
     <tr>
@@ -137,7 +140,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 When an external reference is provided, you can turn on read trimming and splitting to further increase read quality. See [Trimming and splitting](#trimming-and-splitting) for more information.
 
 ```
-filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 500 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 500 input.fastq.gz | gzip > output.fastq.gz
 ```
 
 * `--trim` ← Trim bases from the start and end of reads which do not match a _k_-mer in the reference. This ensures the each read starts and ends with good sequence.
@@ -162,7 +165,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 You can adjust the relative importance of Filtlong's read metrics. In this example, more weight is given to read length.
 
 ```
-filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 1000 --length_weight 10 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 1000 --length_weight 10 input.fastq.gz | gzip > output.fastq.gz
 ```
 
 * `--length_weight 10` ← A length weight of 10 (instead of the default of 1) makes read length more important when choosing the best reads.
@@ -187,7 +190,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 You can adjust the relative importance of Filtlong's read metrics. In this example, more weight is given to read quality.
 
 ```
-filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 100 --mean_q_weight 10 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 100 --mean_q_weight 10 input.fastq.gz | gzip > output.fastq.gz
 ```
 
 * `--mean_q_weight 10` ← A mean quality weight of 10 (instead of the default of 1) makes mean read quality more important when choosing the best reads.
@@ -211,7 +214,7 @@ filtlong -1 illumina_1.fastq.gz -2 illumina_2.fastq.gz --min_length 1000 --keep_
 ## Full usage
 
 ```
-usage: filtlong {OPTIONS} [input_reads]
+usage: bin/filtlong {OPTIONS} [input_reads]
 
 Filtlong: a quality filtering tool for Nanopore and PacBio reads
 
@@ -221,18 +224,18 @@ positional arguments:
 optional arguments:
    output thresholds:
       -t[int], --target_bases [int]        keep only the best reads up to this many total bases
-      -p[float], --keep_percent [float]    keep only this percentage of the best reads (measured by
-                                           bases)
+      -p[float], --keep_percent [float]    keep only this percentage of the best reads (measured
+                                           by bases)
       --min_length [int]                   minimum length threshold
       --max_length [int]                   maximum length threshold
       --min_mean_q [float]                 minimum mean quality threshold
       --min_window_q [float]               minimum window quality threshold
 
-   external references (if provided, read quality will be determined using these instead of from the
-   Phred scores):
+   external references (if provided, read quality will be determined using these instead of
+   from the Phred scores):
       -a[file], --assembly [file]          reference assembly in FASTA format
-      -1[file], --illumina_1 [file]        reference Illumina reads in FASTQ format
-      -2[file], --illumina_2 [file]        reference Illumina reads in FASTQ format
+      -1[file], --short_1 [file]           reference short reads in FASTQ format
+      -2[file], --short_2 [file]           reference short reads in FASTQ format
 
    score weights (control the relative contribution of each score to the final read score):
       --length_weight [float]              weight given to the length score (default: 1)
@@ -245,8 +248,8 @@ optional arguments:
                                            non-k-mer-matching bases
 
    other:
-      --window_size [int]                  size of sliding window used when measuring window quality
-                                           (default: 250)
+      --window_size [int]                  size of sliding window used when measuring window
+                                           quality (default: 250)
       --verbose                            verbose output to stderr with info for each read
       --version                            display the program version and quit
 
@@ -262,7 +265,7 @@ When run, Filtlong carries out the following steps:
 
 1. If an external reference was provided, hash all of the reference's 16-mers.
     * If the reference is an assembly, then Filtlong simply hashes all 16-mers in the assembly.
-    * If the reference is in Illumina reads, then the 16-mer has to be encountered a few times before it's hashed (to avoid hashing 16-mers that result from read errors).
+    * If the reference is in short reads, then the 16-mer has to be encountered a few times before it's hashed (to avoid hashing 16-mers that result from read errors).
 2. Look at each of the input reads to get length and quality information.
     * If a read fails to meet any of the hard thresholds (`--min_length`, `--max_length`, `--min_mean_q` or `--min_window_q`) then it is marked as 'fail' now.
         * Note that `--min_mean_q` and `--min_window_q` are expressed as sequence percent identities from 0-100 (see how this is calculated in the [Read scoring](#read-scoring) section), not as PHRED scores.
@@ -381,9 +384,9 @@ Trimming/splitting has turned a very long read with some bad regions into some s
   * It's a _footlong_ hot dog. Filtlong... footlong... get it?! Not all my Australian colleagues were familiar with footlong hot dogs, so maybe they are a US thing. Leave it to Americans to take an unhealthy food and make an extra large version :smile:
 * __Why does Filtlong use a _k_-mer size of 16 when hashing reference _k_-mers?__
   * Because I can fit a 16-mer sequence neatly into a 32-bit unsigned integer ([like this](https://github.com/rrwick/Filtlong/blob/ce99bc062bb1611f38deb5e7502cfb66b98598ae/src/kmers.cpp#L222-L229)). It also seemed like a good balance between small _k_-mers where there's more risk of chance matches and large _k_-mers where noisy long reads will struggle to match. I haven't empirically tested the effectiveness of different _k_-mer sizes though – might be good to check out for a future version of Filtlong.
-* __Is it ever a _bad_ idea to use an external reference (like Illumina reads)?__
-  * If you provide Filtlong with an external reference, then long read qualities will be determined solely based on their _k_-mer matches to the reference. This is great if your Illumina reads have complete coverage. However, if they have poor coverage (i.e. parts of the genome are not represented in the Illumina reads), then long reads which span the poor-Illumina-coverage part of the genome may be erroneously considered low-quality.
-  * Similarly, if there are genuine biological differences between your read sets, then the long reads may be erroneously considered low-quality in regions of difference. E.g. if your long read sample has a plasmid which isn't in your Illumina reads, then Filtlong could remove long reads from that plasmid.
+* __Is it ever a _bad_ idea to use an external reference (like short reads)?__
+  * If you provide Filtlong with an external reference, then long read qualities will be determined solely based on their _k_-mer matches to the reference. This is great if your short reads have complete coverage. However, if they have poor coverage (i.e. parts of the genome are not represented in the short reads), then long reads which span the poor-short-read-coverage part of the genome may be erroneously considered low-quality.
+  * Similarly, if there are genuine biological differences between your read sets, then the long reads may be erroneously considered low-quality in regions of difference. E.g. if your long read sample has a plasmid which isn't in your short reads, then Filtlong could remove long reads from that plasmid.
   * If you think either of these cases applies to you, I'd recommend _against_ using an external reference.
 * __Are FASTA inputs allowed?__
   * Yes, but only if you use an external reference (with the `-a` or `-1`/`-2` options). This is because Filtlong needs to assess read quality, and FASTA reads contain no quality information. If you use a FASTA input, Filtlong will produce a FASTA output.

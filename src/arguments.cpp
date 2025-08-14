@@ -103,12 +103,12 @@ Arguments::Arguments(int argc, char **argv) {
     s_arg assembly_arg(references_group, "file",
                        "reference assembly in FASTA format",
                         {'a', "assembly"});
-    s_arg illumina_1_arg(references_group, "file",
-                         "reference Illumina reads in FASTQ format",
-                         {'1', "illumina_1"});
-    s_arg illumina_2_arg(references_group, "file",
-                         "reference Illumina reads in FASTQ format",
-                         {'2', "illumina_2"});
+    s_arg short_1_arg(references_group, "file",
+                         "reference short reads in FASTQ format",
+                         {'1', "short_1"});
+    s_arg short_2_arg(references_group, "file",
+                         "reference short reads in FASTQ format",
+                         {'2', "short_2"});
 
     args::Group score_weights_group(parser, "NLscore weights "    // The NL at the start results in a newline
                                             "(control the relative contribution of each score to the final read score):");
@@ -193,10 +193,10 @@ Arguments::Arguments(int argc, char **argv) {
     assembly_set = bool(assembly_arg);
     assembly = args::get(assembly_arg);
 
-    if (bool(illumina_1_arg))
-        illumina_reads.push_back(args::get(illumina_1_arg));
-    if (bool(illumina_2_arg))
-        illumina_reads.push_back(args::get(illumina_2_arg));
+    if (bool(short_1_arg))
+        short_reads.push_back(args::get(short_1_arg));
+    if (bool(short_2_arg))
+        short_reads.push_back(args::get(short_2_arg));
 
     min_length_set = bool(min_length_arg);
     min_length = args::get(min_length_arg);
@@ -222,7 +222,7 @@ Arguments::Arguments(int argc, char **argv) {
     window_size = args::get(window_size_arg);
     verbose = args::get(verbose_arg);
 
-    bool some_reference = (illumina_reads.size() > 0 || assembly_set);
+    bool some_reference = (short_reads.size() > 0 || assembly_set);
     if (trim && !some_reference) {
         std::cerr << "Error: assembly or read reference is required to use --trim" << "\n";
         parsing_result = BAD;
@@ -237,7 +237,7 @@ Arguments::Arguments(int argc, char **argv) {
     // Check to make sure files exist.
     std::vector<std::string> files;
     files.push_back(input_reads);
-    for (auto f : illumina_reads)
+    for (auto f : short_reads)
         files.push_back(f);
     if (assembly_set)
         files.push_back(assembly);

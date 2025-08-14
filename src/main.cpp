@@ -49,13 +49,13 @@ int main(int argc, char **argv)
     std::cerr << "\n";
 
     // Read through references and save 16-mers. For assembly references, this will save all 16-mers in the assembly.
-    // For Illumina read references, the k-mer needs to appear a few times before it's added to the set.
+    // For short read references, the k-mer needs to appear a few times before it's added to the set.
     Kmers kmers;
-    if (args.assembly_set || args.illumina_reads.size() > 0) {
+    if (args.assembly_set || args.short_reads.size() > 0) {
         if (args.assembly_set)
             kmers.add_assembly_fasta(args.assembly);
-        if (args.illumina_reads.size() > 0)
-            kmers.add_read_fastqs(args.illumina_reads);
+        if (args.short_reads.size() > 0)
+            kmers.add_read_fastqs(args.short_reads);
     }
 
     // Read through input long reads once, storing them as Read objects and calculating their scores.

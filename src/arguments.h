@@ -53,7 +53,7 @@ public:
 
     bool assembly_set;
     std::string assembly;
-    std::vector<std::string> illumina_reads;
+    std::vector<std::string> short_reads;
 
     double length_weight;
     double mean_q_weight;
