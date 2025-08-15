@@ -65,7 +65,7 @@ Note: as explained in the [FAQ section](#faq), I recommend _against_ using short
 
 ## Example commands (detailed)
 
-These examples use a 1.3 Gbp read set that was part of a [barcoded 1D MinION run](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing). I assessed read identity by aligning the reads to a completed assembly using [minimap2](https://github.com/lh3/minimap2) and [this script](misc/read_length_identity.py).
+These examples use a 1.3 Gbp read set that was part of a [barcoded 1D MinION run](https://github.com/rrwick/Bacterial-genome-assemblies-with-multiplex-MinION-sequencing). I assessed read identity by aligning the reads to a completed assembly using [minimap2](https://github.com/lh3/minimap2).
 
 <table>
     <tr>
@@ -223,33 +223,38 @@ positional arguments:
 
 optional arguments:
    output thresholds:
-      -t[int], --target_bases [int]        keep only the best reads up to this many total bases
-      -p[float], --keep_percent [float]    keep only this percentage of the best reads (measured
-                                           by bases)
+      -t[int], --target_bases [int]        keep only the best reads up to this many total
+                                           bases
+      -p[float], --keep_percent [float]    keep only this percentage of the best reads
+                                           (measured by bases)
       --min_length [int]                   minimum length threshold
       --max_length [int]                   maximum length threshold
       --min_mean_q [float]                 minimum mean quality threshold
       --min_window_q [float]               minimum window quality threshold
 
-   external references (if provided, read quality will be determined using these instead of
-   from the Phred scores):
+   external references (if provided, read quality will be determined using these instead
+   of from the Phred scores):
       -a[file], --assembly [file]          reference assembly in FASTA format
       -1[file], --short_1 [file]           reference short reads in FASTQ format
       -2[file], --short_2 [file]           reference short reads in FASTQ format
 
-   score weights (control the relative contribution of each score to the final read score):
+   score weights (control the relative contribution of each score to the final read
+   score):
       --length_weight [float]              weight given to the length score (default: 1)
-      --mean_q_weight [float]              weight given to the mean quality score (default: 1)
-      --window_q_weight [float]            weight given to the window quality score (default: 1)
+      --mean_q_weight [float]              weight given to the mean quality score (default:
+                                           1)
+      --window_q_weight [float]            weight given to the window quality score
+                                           (default: 1)
 
    read manipulation:
-      --trim                               trim non-k-mer-matching bases from start/end of reads
+      --trim                               trim non-k-mer-matching bases from start/end of
+                                           reads
       --split [split]                      split reads at this many (or more) consecutive
                                            non-k-mer-matching bases
 
    other:
-      --window_size [int]                  size of sliding window used when measuring window
-                                           quality (default: 250)
+      --window_size [int]                  size of sliding window used when measuring
+                                           window quality (default: 250)
       --verbose                            verbose output to stderr with info for each read
       --version                            display the program version and quit
 
@@ -269,7 +274,6 @@ When run, Filtlong carries out the following steps:
 2. Look at each of the input reads to get length and quality information.
     * If a read fails to meet any of the hard thresholds (`--min_length`, `--max_length`, `--min_mean_q` or `--min_window_q`) then it is marked as 'fail' now.
         * Note that `--min_mean_q` and `--min_window_q` are expressed as sequence percent identities from 0-100 (see how this is calculated in the [Read scoring](#read-scoring) section), not as PHRED scores.
-        * For advice on setting minimum quality thresholds, see [Filtlong's scripts directory](https://github.com/rrwick/Filtlong/tree/main/scripts).
     * If `--trim` or `--split` was used, then 'child' reads are made here (see [Trimming and splitting](#trimming-and-splitting)).
     * If `--verbose` was used, display detailed information about the read length, quality and trimming/splitting.
 3. Gather up all reads eligible for output. If neither `--trim` nor `--split` was used, this is simply the original set of reads. If `--trim` or `--split` was used, then the child reads replace the original reads.
