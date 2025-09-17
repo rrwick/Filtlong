@@ -19,9 +19,32 @@
 
 #include <string>
 #include <vector>
+#include <sstream>
+#include <algorithm>
+#include <cctype>
+#include <climits>
 
 
 enum ParsingResult {GOOD, BAD, HELP, VERSION};
+
+
+struct DoublesReader
+{
+    void operator()(const std::string &name, const std::string &value, double &destination);
+};
+
+
+struct IntegerWithSuffixReader
+{
+    void operator()(const std::string &name, const std::string &value, long long &destination);
+    long long parse_int_with_suffix(const std::string &value);
+};
+
+
+struct IntWithSuffixReader
+{
+    void operator()(const std::string &name, const std::string &value, int &destination);
+};
 
 
 class Arguments

@@ -25,25 +25,98 @@
 #include "args.h"
 
 
-struct DoublesReader
-{
-    void operator()(const std::string &name, const std::string &value, double &destination) {
-        try {
-            if (value.find_first_not_of("0123456789.") != std::string::npos)
-                throw std::invalid_argument("");
-            destination = std::stod(value);
-        }
-        catch ( ... ) {
-            std::ostringstream problem;
-            problem << "Error: argument '" << name << "' received invalid value type '" << value << "'";
-            throw args::ParseError(problem.str());
-        }
+void DoublesReader::operator()(const std::string &name, const std::string &value, double &destination) {
+    try {
+        if (value.find_first_not_of("0123456789.") != std::string::npos)
+            throw std::invalid_argument("");
+        destination = std::stod(value);
     }
-};
+    catch ( ... ) {
+        std::ostringstream problem;
+        problem << "Error: argument '" << name << "' received invalid value type '" << value << "'";
+        throw args::ParseError(problem.str());
+    }
+}
+
+
+void IntegerWithSuffixReader::operator()(const std::string &name, const std::string &value, long long &destination) {
+    try {
+        destination = parse_int_with_suffix(value);
+    }
+    catch ( ... ) {
+        std::ostringstream problem;
+        problem << "Error: argument '" << name << "' received invalid value '" << value << "'";
+        throw args::ParseError(problem.str());
+    }
+}
+
+long long IntegerWithSuffixReader::parse_int_with_suffix(const std::string &value) {
+    if (value.empty()) {
+        throw std::invalid_argument("Empty value");
+    }
+
+    std::string lower_value = value;
+    std::transform(lower_value.begin(), lower_value.end(), lower_value.begin(), ::tolower);
+
+    // Find the position where the suffix begins (excluding potential negative sign)
+    size_t start_pos = (value[0] == '-') ? 1 : 0;
+    size_t suffix_pos = lower_value.find_first_not_of("0123456789.", start_pos);
+    
+    if (suffix_pos == std::string::npos) {
+        // No suffix, parse as regular number
+        return static_cast<long long>(std::stod(value));
+    }
+
+    // Extract numeric part and suffix
+    std::string numeric_part = value.substr(0, suffix_pos);
+    std::string suffix = lower_value.substr(suffix_pos);
+
+    if (numeric_part.empty() || (numeric_part.size() == 1 && numeric_part[0] == '-')) {
+        throw std::invalid_argument("No numeric value before suffix");
+    }
+
+    double numeric_value = std::stod(numeric_part);
+    long long multiplier = 1;
+
+    // Parse suffix to determine multiplier
+    if (suffix == "k" || suffix == "kb") {
+        multiplier = 1000;
+    } else if (suffix == "m" || suffix == "mb") {
+        multiplier = 1000000;
+    } else if (suffix == "g" || suffix == "gb") {
+        multiplier = 1000000000;
+    } else {
+        throw std::invalid_argument("Unknown suffix: " + suffix);
+    }
+
+    return static_cast<long long>(numeric_value * multiplier);
+}
+
+
+void IntWithSuffixReader::operator()(const std::string &name, const std::string &value, int &destination) {
+    try {
+        IntegerWithSuffixReader reader;
+        long long result = reader.parse_int_with_suffix(value);
+        
+        // Check for overflow
+        if (result > INT_MAX || result < INT_MIN) {
+            throw std::invalid_argument("Value out of range for int");
+        }
+        
+        destination = static_cast<int>(result);
+    }
+    catch ( ... ) {
+        std::ostringstream problem;
+        problem << "Error: argument '" << name << "' received invalid value '" << value << "'";
+        throw args::ParseError(problem.str());
+    }
+}
 
 
 typedef args::ValueFlag<double, DoublesReader> d_arg;
 typedef args::ValueFlag<long long> i_arg;
+typedef args::ValueFlag<long long, IntegerWithSuffixReader> ll_suffix_arg;
+typedef args::ValueFlag<int, IntWithSuffixReader> i_suffix_arg;
 typedef args::ValueFlag<std::string> s_arg;
 typedef args::Flag f_arg;
 
@@ -79,17 +152,17 @@ Arguments::Arguments(int argc, char **argv) {
                                       "input long reads to be filtered");
 
     args::Group thresholds_group(parser, "output thresholds:");
-    i_arg target_bases_arg(thresholds_group, "int",
-                           "keep only the best reads up to this many total bases",
+    ll_suffix_arg target_bases_arg(thresholds_group, "int",
+                           "keep only the best reads up to this many total bases (unit suffixes: k, kb, m, mb, g, gb)",
                            {'t', "target_bases"});
     d_arg keep_percent_arg(thresholds_group, "float",
                            "keep only this percentage of the best reads (measured by bases)",
                            {'p', "keep_percent"});
-    i_arg min_length_arg(thresholds_group, "int",
-                         "minimum length threshold",
+    i_suffix_arg min_length_arg(thresholds_group, "int",
+                         "minimum length threshold (unit suffixes: k, kb, m, mb, g, gb)",
                          {"min_length"});
-    i_arg max_length_arg(thresholds_group, "int",
-                         "maximum length threshold",
+    i_suffix_arg max_length_arg(thresholds_group, "int",
+                         "maximum length threshold (unit suffixes: k, kb, m, mb, g, gb)",
                          {"max_length"});
     d_arg min_mean_q_arg(thresholds_group, "float",
                          "minimum mean quality threshold",
@@ -128,8 +201,8 @@ Arguments::Arguments(int argc, char **argv) {
     f_arg trim_arg(manipulation_group, "trim",
                    "trim non-k-mer-matching bases from start/end of reads",
                    {"trim"});
-    i_arg split_arg(manipulation_group, "split",
-                    "split reads at this many (or more) consecutive non-k-mer-matching bases",
+    i_suffix_arg split_arg(manipulation_group, "split",
+                    "split reads at this many (or more) consecutive non-k-mer-matching bases (unit suffixes: k, kb, m, mb, g, gb)",
                     {"split"});
 
     args::Group other_group(parser, "NLother:");    // The NL at the start results in a newline
@@ -152,17 +225,17 @@ Arguments::Arguments(int argc, char **argv) {
     try {
         parser.ParseCLI(argc, argv);
     }
-    catch (args::Help) {
+    catch (const args::Help&) {
         std::cerr << parser;
         parsing_result = HELP;
         return;
     }
-    catch (args::ParseError e) {
+    catch (const args::ParseError& e) {
         std::cerr << e.what() << "\n";
         parsing_result = BAD;
         return;
     }
-    catch (args::ValidationError e) {
+    catch (const args::ValidationError& e) {
         std::cerr << e.what() << "\n";
         parsing_result = BAD;
         return;

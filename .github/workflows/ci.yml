@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v5
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential zlib1g-dev python3 locales
+
+    # tests fail due to number formatting if the default runner locale ('C') is used
+    - name: Set locale
+      run: |
+        sudo locale-gen en_US.UTF-8
+        sudo update-locale LANG=en_US.UTF-8
+    
+    - name: Build project
+      run: make -j
+    
+    - name: Test help menu and version
+      run: |
+        ./bin/filtlong --help > /dev/null
+        ./bin/filtlong --version > /dev/null
+    
+    - name: Run tests
+      run: python3 -m unittest discover -s test -p "test_*.py"
+      env:
+        LANG: en_US.UTF-8
+        LC_ALL: en_US.UTF-8
