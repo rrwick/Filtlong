@@ -1,4 +1,4 @@
-<p align="center"><picture><source srcset="misc/filtlong_logo-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/filtlong_logo_transparent.png" alt="Filtlong" width="450"></picture></p>
+<p align="center"><picture><source srcset="misc/filtlong_logo-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/filtlong_logo.png" alt="Filtlong" width="450"></picture></p>
 
 Filtlong is a tool for filtering long reads by quality. It can take a set of long reads and produce a smaller, better subset. It uses both read length (longer is better) and read identity (higher is better) when choosing which reads pass the filter.
 
