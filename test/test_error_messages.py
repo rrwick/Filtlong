@@ -172,3 +172,18 @@ class TestErrorMessages(unittest.TestCase):
         console_out, return_code = self.run_command('filtlong --target_bases 1000 BADFASTQ > OUTPUT.fastq')
         self.assertTrue('Error: incorrect FASTQ format for read' in console_out)
         self.assertEqual(return_code, 1)
+
+    def test_min_length_too_low_short_option(self):
+        console_out, return_code = self.run_command('filtlong -l -10 INPUT > OUTPUT.fastq')
+        self.assertTrue('Error: the value for --min_length must be a positive integer' in console_out)
+        self.assertEqual(return_code, 1)
+
+    def test_max_length_too_low_short_option(self):
+        console_out, return_code = self.run_command('filtlong -L -10 INPUT > OUTPUT.fastq')
+        self.assertTrue('Error: the value for --max_length must be a positive integer' in console_out)
+        self.assertEqual(return_code, 1)
+
+    def test_min_mean_q_too_low_short_option(self):
+        console_out, return_code = self.run_command('filtlong -q 0 INPUT > OUTPUT.fastq')
+        self.assertTrue('Error: the value for --min_mean_q must be greater than 0' in console_out)
+        self.assertEqual(return_code, 1)

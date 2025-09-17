@@ -1,4 +1,4 @@
-<p align="center"><picture><source srcset="misc/filtlong_logo-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/filtlong_logo_transparent.png" alt="Filtlong" width="450"></picture></p>
+<p align="center"><picture><source srcset="misc/filtlong_logo-dark.png" media="(prefers-color-scheme: dark)"><img src="misc/filtlong_logo.png" alt="Filtlong" width="450"></picture></p>
 
 Filtlong is a tool for filtering long reads by quality. It can take a set of long reads and produce a smaller, better subset. It uses both read length (longer is better) and read identity (higher is better) when choosing which reads pass the filter.
 
@@ -61,7 +61,25 @@ filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percen
 
 Note: as explained in the [FAQ section](#faq), I recommend _against_ using short reads as an external reference unless you are very confident in the quality of your short-read set.
 
+### Unit suffixes
 
+You can use convenient unit suffixes for all length-based options:
+
+```
+# Using kilobase (k/kb) and megabase (m/mb) suffixes
+filtlong --min_length 1kb --keep_percent 90 --target_bases 500m input.fastq.gz | gzip > output.fastq.gz
+
+# Using gigabase (gb) suffix for very large datasets
+filtlong -l 5k --max_length 100k --target_bases 2gb input.fastq.gz | gzip > output.fastq.gz
+
+# Decimal values are supported too
+filtlong --target_bases 1.5g --split 0.5k input.fastq.gz | gzip > output.fastq.gz
+
+# Suffixes are case insensitive too
+filtlong -l 1KB --keep_percent 90 --target_bases 500M input.fastq.gz | gzip > output.fastq.gz
+```
+
+Supported suffixes: `k`, `kb`, `m`, `mb`, `g`, `gb` (case insensitive)
 
 ## Example commands (detailed)
 
@@ -86,12 +104,12 @@ These examples use a 1.3 Gbp read set that was part of a [barcoded 1D MinION run
 When you run Filtlong without an external reference, it judges read quality using the Phred quality scores in the FASTQ file.
 
 ```
-filtlong --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fastq.gz | gzip > output.fastq.gz
+filtlong --min_length 1kb --keep_percent 90 --target_bases 500mb input.fastq.gz | gzip > output.fastq.gz
 ```
 
-* `--min_length 1000` ← Discard any read which is shorter than 1 kbp.
+* `--min_length 1kb` ← Discard any read which is shorter than 1 kbp (using unit suffix for convenience).
 * `--keep_percent 90` ← Throw out the worst 10% of reads. This is measured by bp, not by read count. So this option throws out the worst 10% of read bases.
-* `--target_bases 500000000` ← Remove the worst reads until only 500 Mbp remain, useful for very large read sets. If the input read set is less than 500 Mbp, this setting will have no effect.
+* `--target_bases 500mb` ← Remove the worst reads until only 500 Mbp remain (using unit suffix), useful for very large read sets. If the input read set is less than 500 Mbp, this setting will have no effect.
 * `input.fastq.gz` ← The input long reads to be filtered (must be FASTQ format). 
 * `| gzip > output.fastq.gz` ← Filtlong outputs the filtered reads to stdout. Pipe to gzip to keep the file size down.
 
@@ -116,7 +134,7 @@ When an external reference is provided, Filtlong ignores the Phred quality score
 **NOTE**: I would only recommend using short reads with Filtlong if they are _good_ short reads (high depth and complete coverage). See the [FAQ section](#faq) for more info.
 
 ```
-filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1kb --keep_percent 90 --target_bases 500mb input.fastq.gz | gzip > output.fastq.gz
 ```
 
 * `-1 short_1.fastq.gz -2 short_2.fastq.gz` ← Use short reads as an external reference. You can instead use `-a` to provide an assembly as a reference, but reads are preferable if available.
@@ -140,11 +158,11 @@ filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percen
 When an external reference is provided, you can turn on read trimming and splitting to further increase read quality. See [Trimming and splitting](#trimming-and-splitting) for more information.
 
 ```
-filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 500 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1kb --keep_percent 90 --target_bases 500mb --trim --split 500 input.fastq.gz | gzip > output.fastq.gz
 ```
 
 * `--trim` ← Trim bases from the start and end of reads which do not match a _k_-mer in the reference. This ensures the each read starts and ends with good sequence.
-* `--split 500` ← Split reads whenever 500 consecutive bases fail to match a _k_-mer in the reference. This serves to remove very poor parts of reads while keeping the good parts. A lower value will split more aggressively and a higher value will be more conservative.
+* `--split 500` ← Split reads whenever 500 consecutive bases fail to match a _k_-mer in the reference. This serves to remove very poor parts of reads while keeping the good parts. A lower value will split more aggressively and a higher value will be more conservative. You can also use [unit suffixes](#unit-suffixes) here.
 
 <table>
     <tr>
@@ -165,11 +183,11 @@ filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percen
 You can adjust the relative importance of Filtlong's read metrics. In this example, more weight is given to read length.
 
 ```
-filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 1000 --length_weight 10 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1kb --keep_percent 90 --target_bases 500mb --trim --split 1kb --length_weight 10 input.fastq.gz | gzip > output.fastq.gz
 ```
 
 * `--length_weight 10` ← A length weight of 10 (instead of the default of 1) makes read length more important when choosing the best reads.
-* `--split 1000` ← This larger split value makes Filtlong less likely to split a read. I.e. a read has to have a _lot_ of consecutive bad bases before it gets split. This helps to keep the output reads longer.
+* `--split 1kb` ← This larger split value makes Filtlong less likely to split a read. I.e. a read has to have a _lot_ of consecutive bad bases before it gets split. This helps to keep the output reads longer.
 
 <table>
     <tr>
@@ -190,7 +208,7 @@ filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percen
 You can adjust the relative importance of Filtlong's read metrics. In this example, more weight is given to read quality.
 
 ```
-filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1000 --keep_percent 90 --target_bases 500000000 --trim --split 100 --mean_q_weight 10 input.fastq.gz | gzip > output.fastq.gz
+filtlong -1 short_1.fastq.gz -2 short_2.fastq.gz --min_length 1kb --keep_percent 90 --target_bases 500mb --trim --split 100 --mean_q_weight 10 input.fastq.gz | gzip > output.fastq.gz
 ```
 
 * `--mean_q_weight 10` ← A mean quality weight of 10 (instead of the default of 1) makes mean read quality more important when choosing the best reads.
@@ -223,38 +241,31 @@ positional arguments:
 
 optional arguments:
    output thresholds:
-      -t[int], --target_bases [int]        keep only the best reads up to this many total
-                                           bases
-      -p[float], --keep_percent [float]    keep only this percentage of the best reads
-                                           (measured by bases)
-      --min_length [int]                   minimum length threshold
-      --max_length [int]                   maximum length threshold
-      --min_mean_q [float]                 minimum mean quality threshold
+      -t[int], --target_bases [int]        keep only the best reads up to this many total bases (unit suffixes: k, kb,
+                                           m, mb, g, gb)
+      -p[float], --keep_percent [float]    keep only this percentage of the best reads (measured by bases)
+      -l[int], --min_length [int]          minimum length threshold (unit suffixes: k, kb, m, mb, g, gb)
+      -L[int], --max_length [int]          maximum length threshold (unit suffixes: k, kb, m, mb, g, gb)
+      -q[float], --min_mean_q [float]      minimum mean quality threshold
       --min_window_q [float]               minimum window quality threshold
 
-   external references (if provided, read quality will be determined using these instead
-   of from the Phred scores):
+   external references (if provided, read quality will be determined using these instead of from the Phred scores):
       -a[file], --assembly [file]          reference assembly in FASTA format
       -1[file], --short_1 [file]           reference short reads in FASTQ format
       -2[file], --short_2 [file]           reference short reads in FASTQ format
 
-   score weights (control the relative contribution of each score to the final read
-   score):
+   score weights (control the relative contribution of each score to the final read score):
       --length_weight [float]              weight given to the length score (default: 1)
-      --mean_q_weight [float]              weight given to the mean quality score (default:
-                                           1)
-      --window_q_weight [float]            weight given to the window quality score
-                                           (default: 1)
+      --mean_q_weight [float]              weight given to the mean quality score (default: 1)
+      --window_q_weight [float]            weight given to the window quality score (default: 1)
 
    read manipulation:
-      --trim                               trim non-k-mer-matching bases from start/end of
-                                           reads
-      --split [split]                      split reads at this many (or more) consecutive
-                                           non-k-mer-matching bases
+      --trim                               trim non-k-mer-matching bases from start/end of reads
+      --split [split]                      split reads at this many (or more) consecutive non-k-mer-matching bases (unit
+                                           suffixes: k, kb, m, mb, g, gb)
 
    other:
-      --window_size [int]                  size of sliding window used when measuring
-                                           window quality (default: 250)
+      --window_size [int]                  size of sliding window used when measuring window quality (default: 250)
       --verbose                            verbose output to stderr with info for each read
       --version                            display the program version and quit
 
