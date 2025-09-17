@@ -160,13 +160,13 @@ Arguments::Arguments(int argc, char **argv) {
                            {'p', "keep_percent"});
     i_suffix_arg min_length_arg(thresholds_group, "int",
                          "minimum length threshold (unit suffixes: k, kb, m, mb, g, gb)",
-                         {"min_length"});
+                         {'l', "min_length"});
     i_suffix_arg max_length_arg(thresholds_group, "int",
                          "maximum length threshold (unit suffixes: k, kb, m, mb, g, gb)",
-                         {"max_length"});
+                         {'L', "max_length"});
     d_arg min_mean_q_arg(thresholds_group, "float",
                          "minimum mean quality threshold",
-                         {"min_mean_q"});
+                         {'q', "min_mean_q"});
     d_arg min_window_q_arg(thresholds_group, "float",
                            "minimum window quality threshold",
                            {"min_window_q"});

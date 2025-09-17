@@ -187,3 +187,25 @@ class TestUnitSuffixes(unittest.TestCase):
         console_out, return_code = self.run_command('filtlong --min_length -5kb INPUT > OUTPUT.fastq')
         self.assertEqual(return_code, 1)
         self.assertTrue('Error: the value for --min_length must be a positive integer' in console_out)
+
+    def test_min_length_short_option_suffix(self):
+        """Test that unit suffixes work for -l option."""
+        console_out, return_code = self.run_command('filtlong -l 5k INPUT > OUTPUT.fastq')
+        self.assertEqual(return_code, 0)
+        # Should pass all reads since they're all 5000bp
+
+    def test_max_length_short_option_suffix(self):
+        """Test that unit suffixes work for -L option."""
+        console_out, return_code = self.run_command('filtlong -L 10k INPUT > OUTPUT.fastq')
+        self.assertEqual(return_code, 0)
+        # Should pass all reads since they're all 5000bp
+
+    def test_negative_values_with_suffixes_short_options(self):
+        """Test that negative values with suffixes are properly rejected for short options."""
+        console_out, return_code = self.run_command('filtlong -l -10k INPUT > OUTPUT.fastq')
+        self.assertEqual(return_code, 1)
+        self.assertTrue('Error: the value for --min_length must be a positive integer' in console_out)
+
+        console_out, return_code = self.run_command('filtlong -L -5kb INPUT > OUTPUT.fastq')
+        self.assertEqual(return_code, 1)
+        self.assertTrue('Error: the value for --max_length must be a positive integer' in console_out)

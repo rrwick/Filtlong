@@ -70,13 +70,13 @@ You can use convenient unit suffixes for all length-based options:
 filtlong --min_length 1kb --keep_percent 90 --target_bases 500m input.fastq.gz | gzip > output.fastq.gz
 
 # Using gigabase (gb) suffix for very large datasets
-filtlong --min_length 5k --max_length 100k --target_bases 2gb input.fastq.gz | gzip > output.fastq.gz
+filtlong -l 5k --max_length 100k --target_bases 2gb input.fastq.gz | gzip > output.fastq.gz
 
 # Decimal values are supported too
 filtlong --target_bases 1.5g --split 0.5k input.fastq.gz | gzip > output.fastq.gz
 
 # Suffixes are case insensitive too
-filtlong --min_length 1KB --keep_percent 90 --target_bases 500M input.fastq.gz | gzip > output.fastq.gz
+filtlong -l 1KB --keep_percent 90 --target_bases 500M input.fastq.gz | gzip > output.fastq.gz
 ```
 
 Supported suffixes: `k`, `kb`, `m`, `mb`, `g`, `gb` (case insensitive)
@@ -244,9 +244,9 @@ optional arguments:
       -t[int], --target_bases [int]        keep only the best reads up to this many total bases (unit suffixes: k, kb,
                                            m, mb, g, gb)
       -p[float], --keep_percent [float]    keep only this percentage of the best reads (measured by bases)
-      --min_length [int]                   minimum length threshold (unit suffixes: k, kb, m, mb, g, gb)
-      --max_length [int]                   maximum length threshold (unit suffixes: k, kb, m, mb, g, gb)
-      --min_mean_q [float]                 minimum mean quality threshold
+      -l[int], --min_length [int]          minimum length threshold (unit suffixes: k, kb, m, mb, g, gb)
+      -L[int], --max_length [int]          maximum length threshold (unit suffixes: k, kb, m, mb, g, gb)
+      -q[float], --min_mean_q [float]      minimum mean quality threshold
       --min_window_q [float]               minimum window quality threshold
 
    external references (if provided, read quality will be determined using these instead of from the Phred scores):
