@@ -14,6 +14,7 @@
 // <http://www.gnu.org/licenses/>.
 
 
+#include <array>
 #include <iostream>
 #include <math.h>
 #include <limits>
@@ -269,5 +270,14 @@ void Read::set_final_score(double length_weight, double mean_q_weight, double wi
 
 double Read::qscore_to_quality(char qscore) {
     int q = qscore - 33;
+    // Cache the probabilities for printable FASTQ quality characters (Phred 0-93).
+    static const std::array<double, 94> qualities = [] {
+        std::array<double, 94> values;
+        for (int i = 0; i < 94; ++i)
+            values[i] = 1.0 - pow(10.0, -i / 10.0);
+        return values;
+    }();
+    if (q >= 0 && q < 94)
+        return qualities[q];
     return 1.0 - pow(10.0, -q / 10.0);
 }
